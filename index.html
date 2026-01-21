@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>UK Coin Maths Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6fb;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #2c3e50;
+}
+
+#controls {
+    margin-bottom: 15px;
+}
+
+button {
+    font-size: 16px;
+    padding: 8px 12px;
+    margin: 4px;
+    cursor: pointer;
+}
+
+#coins {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.coin {
+    width: 70px;
+    height: 70px;
+    margin: 8px;
+}
+
+#question {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+input {
+    font-size: 18px;
+    padding: 6px;
+    width: 140px;
+    text-align: center;
+}
+
+#feedback {
+    font-size: 20px;
+    margin-top: 10px;
+    min-height: 24px;
+}
+
+#stats {
+    font-size: 18px;
+    margin-top: 15px;
+}
+
+#timer {
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+#trophy {
+    font-size: 60px;
+    display: none;
+    margin-top: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>UK Coin Maths</h1>
+
+<div id="controls">
+    <button onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
+    <button onclick="toggleCurrency()">Answer in: <span id="currencyLabel">pence</span></button>
+    <button onclick="toggleTimer()">Timer: <span id="timerLabel">Off</span></button>
+    <button onclick="resetGame()">Reset</button>
+</div>
+
+<div id="question"></div>
+
+<div id="coins"></div>
+
+<div>
+    <input type="number" id="answer" placeholder="Your answer">
+    <button onclick="checkAnswer()">Check</button>
+</div>
+
+<div id="feedback"></div>
+
+<div id="stats">
+    Streak: <span id="streak">0</span> |
+    Best: <span id="best">0</span>
+</div>
+
+<div id="timer"></div>
+
+<div id="trophy">🏆</div>
+
+<audio id="correctSound">
+    <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=">
+</audio>
+
+<audio id="wrongSound">
+    <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=">
+</audio>
+
+<script>
+const coins = [
+    { value: 1, img: "coins/1p.jpg" },
+    { value: 2, img: "coins/2p.jpg" },
+    { value: 5, img: "coins/5p.jpg" },
+    { value: 10, img: "coins/10p.jpg" },
+    { value: 20, img: "coins/20p.png" },
+    { value: 50, img: "coins/50p.jpg" },
+    { value: 100, img: "coins/1pound.jpg" },
+    { value: 200, img: "coins/2pound.png" }
+];
+
+let mode = "addition";
+let currency = "pence";
+let timerOn = false;
+
+let currentCoins = [];
+let correctTotal = 0;
+
+let streak = 0;
+let best = 0;
+
+let timeLeft = 0;
+let timerInterval = null;
+
+function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function toggleMode() {
+    mode = mode === "addition" ? "multiplication" : "addition";
+    document.getElementById("modeLabel").textContent =
+        mode === "addition" ? "Addition" : "Multiplication";
+    generateQuestion();
+}
+
+function toggleCurrency() {
+    currency = currency === "pence" ? "pounds" : "pence";
+    document.getElementById("currencyLabel").textContent = currency;
+}
+
+function toggleTimer() {
+    timerOn = !timerOn;
+    document.getElementById("timerLabel").textContent = timerOn ? "On" : "Off";
+    generateQuestion();
+}
+
+function resetGame() {
+    streak = 0;
+    best = 0;
+    document.getElementById("streak").textContent = 0;
+    document.getElementById("best").textContent = 0;
+    document.getElementById("trophy").style.display = "none";
+    generateQuestion();
+}
+
+function generateQuestion() {
+    clearInterval(timerInterval);
+    document.getElementById("timer").textContent = "";
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("answer").value = "";
+    currentCoins = [];
+
+    if (mode === "multiplication") {
+        const coin = coins[randomInt(0, coins.length - 1)];
+        const count = randomInt(2, 4);
+        for (let i = 0; i < count; i++) currentCoins.push(coin);
+        correctTotal = coin.value * count;
+        document.getElementById("question").textContent =
+            count + " × " + formatValue(coin.value);
+    } else {
+        const count = randomInt(1, 4);
+        for (let i = 0; i < count; i++) {
+            currentCoins.push(coins[randomInt(0, coins.length - 1)]);
+        }
+        correctTotal = currentCoins.reduce((a, c) => a + c.value, 0);
+        document.getElementById("question").textContent =
+            "Add up the coins";
+    }
+
+    renderCoins();
+
+    if (timerOn) startTimer();
+}
+
+function renderCoins() {
+    const container = document.getElementById("coins");
+    container.innerHTML = "";
+    currentCoins.forEach(c => {
+        const img = document.createElement("img");
+        img.src = c.img;
+        img.className = "coin";
+        container.appendChild(img);
+    });
+}
+
+function formatValue(pence) {
+    return pence >= 100 ? "£" + (pence / 100) : pence + "p";
+}
+
+function startTimer() {
+    timeLeft = 10;
+    document.getElementById("timer").textContent = "Time left: " + timeLeft;
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("timer").textContent = "Time left: " + timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            handleWrong();
+        }
+    }, 1000);
+}
+
+function checkAnswer() {
+    let input = parseFloat(document.getElementById("answer").value);
+    if (isNaN(input)) return;
+
+    let answerInPence = currency === "pounds" ? Math.round(input * 100) : input;
+
+    if (answerInPence === correctTotal) {
+        document.getElementById("correctSound").play();
+        streak++;
+        best = Math.max(best, streak);
+        document.getElementById("feedback").textContent = "Correct! 🎉";
+    } else {
+        handleWrong();
+        return;
+    }
+
+    updateStats();
+    setTimeout(generateQuestion, 1000);
+}
+
+function handleWrong() {
+    document.getElementById("wrongSound").play();
+    document.getElementById("feedback").textContent =
+        "Not quite. Answer was " + correctTotal + "p";
+    streak = 0;
+    updateStats();
+    setTimeout(generateQuestion, 1500);
+}
+
+function updateStats() {
+    document.getElementById("streak").textContent = streak;
+    document.getElementById("best").textContent = best;
+    document.getElementById("trophy").style.display =
+        streak >= 10 ? "block" : "none";
+}
+
+generateQuestion();
+</script>
+
+</body>
+</html>
