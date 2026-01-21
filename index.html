@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>UK Coin Maths Game</title>
+<title>Cillian's Coin Maths Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -28,22 +28,22 @@ button {
     cursor: pointer;
 }
 
+#question {
+    font-size: 20px;
+    margin: 10px 0;
+}
+
 #coins {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    margin: 20px 0;
+    margin: 15px 0;
 }
 
 .coin {
     width: 70px;
     height: 70px;
     margin: 8px;
-}
-
-#question {
-    font-size: 20px;
-    margin-bottom: 10px;
 }
 
 input {
@@ -61,25 +61,25 @@ input {
 
 #stats {
     font-size: 18px;
-    margin-top: 15px;
+    margin-top: 12px;
 }
 
 #timer {
     font-size: 18px;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 #trophy {
     font-size: 60px;
     display: none;
-    margin-top: 15px;
+    margin-top: 12px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>UK Coin Maths</h1>
+<h1>Cillian's Coin</h1>
 
 <div id="controls">
     <button onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
@@ -89,7 +89,6 @@ input {
 </div>
 
 <div id="question"></div>
-
 <div id="coins"></div>
 
 <div>
@@ -105,7 +104,6 @@ input {
 </div>
 
 <div id="timer"></div>
-
 <div id="trophy">🏆</div>
 
 <audio id="correctSound">
@@ -128,7 +126,8 @@ const coins = [
     { value: 200, img: "coins/2pound.png" }
 ];
 
-let mode = "addition";
+let modes = ["addition", "multiplication", "mixed"];
+let modeIndex = 0;
 let currency = "pence";
 let timerOn = false;
 
@@ -146,9 +145,9 @@ function randomInt(min, max) {
 }
 
 function toggleMode() {
-    mode = mode === "addition" ? "multiplication" : "addition";
+    modeIndex = (modeIndex + 1) % modes.length;
     document.getElementById("modeLabel").textContent =
-        mode === "addition" ? "Addition" : "Multiplication";
+        modes[modeIndex].charAt(0).toUpperCase() + modes[modeIndex].slice(1);
     generateQuestion();
 }
 
@@ -178,24 +177,49 @@ function generateQuestion() {
     document.getElementById("feedback").textContent = "";
     document.getElementById("answer").value = "";
     currentCoins = [];
+    correctTotal = 0;
+
+    const mode = modes[modeIndex];
+    let questionText = "";
+
+    if (mode === "addition") {
+        const count = randomInt(1, 4);
+        for (let i = 0; i < count; i++) {
+            const c = coins[randomInt(0, coins.length - 1)];
+            currentCoins.push(c);
+            correctTotal += c.value;
+        }
+        questionText = "Add up the coins";
+    }
 
     if (mode === "multiplication") {
         const coin = coins[randomInt(0, coins.length - 1)];
         const count = randomInt(2, 4);
         for (let i = 0; i < count; i++) currentCoins.push(coin);
         correctTotal = coin.value * count;
-        document.getElementById("question").textContent =
-            count + " × " + formatValue(coin.value);
-    } else {
-        const count = randomInt(1, 4);
-        for (let i = 0; i < count; i++) {
-            currentCoins.push(coins[randomInt(0, coins.length - 1)]);
-        }
-        correctTotal = currentCoins.reduce((a, c) => a + c.value, 0);
-        document.getElementById("question").textContent =
-            "Add up the coins";
+        questionText = count + " × " + formatValue(coin.value);
     }
 
+    if (mode === "mixed") {
+        const baseCoin = coins[randomInt(0, coins.length - 1)];
+        const multCount = randomInt(2, 4);
+
+        for (let i = 0; i < multCount; i++) {
+            currentCoins.push(baseCoin);
+        }
+        correctTotal += baseCoin.value * multCount;
+        questionText = "(" + multCount + " × " + formatValue(baseCoin.value) + ")";
+
+        const extras = randomInt(1, 2);
+        for (let i = 0; i < extras; i++) {
+            const extra = coins[randomInt(0, coins.length - 1)];
+            currentCoins.push(extra);
+            correctTotal += extra.value;
+            questionText += " + " + formatValue(extra.value);
+        }
+    }
+
+    document.getElementById("question").textContent = questionText;
     renderCoins();
 
     if (timerOn) startTimer();
@@ -233,20 +257,20 @@ function checkAnswer() {
     let input = parseFloat(document.getElementById("answer").value);
     if (isNaN(input)) return;
 
-    let answerInPence = currency === "pounds" ? Math.round(input * 100) : input;
+    let answerInPence = currency === "pounds"
+        ? Math.round(input * 100)
+        : Math.round(input);
 
     if (answerInPence === correctTotal) {
         document.getElementById("correctSound").play();
         streak++;
         best = Math.max(best, streak);
         document.getElementById("feedback").textContent = "Correct! 🎉";
+        updateStats();
+        setTimeout(generateQuestion, 1000);
     } else {
         handleWrong();
-        return;
     }
-
-    updateStats();
-    setTimeout(generateQuestion, 1000);
 }
 
 function handleWrong() {
