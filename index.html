@@ -46,10 +46,22 @@ button {
     margin: 8px;
 }
 
+#answerBox {
+    display: inline-flex;
+    align-items: center;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+#prefix, #suffix {
+    font-size: 20px;
+    margin: 0 4px;
+}
+
 input {
     font-size: 18px;
     padding: 6px;
-    width: 140px;
+    width: 120px;
     text-align: center;
 }
 
@@ -57,6 +69,12 @@ input {
     font-size: 20px;
     margin-top: 10px;
     min-height: 24px;
+}
+
+#solution {
+    font-size: 18px;
+    margin-top: 10px;
+    white-space: pre-line;
 }
 
 #stats {
@@ -79,7 +97,7 @@ input {
 
 <body>
 
-<h1>Cillian's Coin</h1>
+<h1>Cillian's Coin Maths Game</h1>
 
 <div id="controls">
     <button onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
@@ -91,12 +109,15 @@ input {
 <div id="question"></div>
 <div id="coins"></div>
 
-<div>
-    <input type="number" id="answer" placeholder="Your answer">
+<div id="answerBox">
+    <span id="prefix"></span>
+    <input type="number" id="answer">
+    <span id="suffix"></span>
     <button onclick="checkAnswer()">Check</button>
 </div>
 
 <div id="feedback"></div>
+<div id="solution"></div>
 
 <div id="stats">
     Streak: <span id="streak">0</span> |
@@ -132,6 +153,7 @@ let currency = "pence";
 let timerOn = false;
 
 let currentCoins = [];
+let steps = [];
 let correctTotal = 0;
 
 let streak = 0;
@@ -154,6 +176,7 @@ function toggleMode() {
 function toggleCurrency() {
     currency = currency === "pence" ? "pounds" : "pence";
     document.getElementById("currencyLabel").textContent = currency;
+    updateAnswerAffixes();
 }
 
 function toggleTimer() {
@@ -175,21 +198,24 @@ function generateQuestion() {
     clearInterval(timerInterval);
     document.getElementById("timer").textContent = "";
     document.getElementById("feedback").textContent = "";
+    document.getElementById("solution").textContent = "";
     document.getElementById("answer").value = "";
     currentCoins = [];
+    steps = [];
     correctTotal = 0;
 
     const mode = modes[modeIndex];
-    let questionText = "";
 
     if (mode === "addition") {
         const count = randomInt(1, 4);
+        let parts = [];
         for (let i = 0; i < count; i++) {
             const c = coins[randomInt(0, coins.length - 1)];
             currentCoins.push(c);
             correctTotal += c.value;
+            parts.push(formatValue(c.value));
         }
-        questionText = "Add up the coins";
+        steps.push(parts.join(" + "));
     }
 
     if (mode === "multiplication") {
@@ -197,47 +223,59 @@ function generateQuestion() {
         const count = randomInt(2, 4);
         for (let i = 0; i < count; i++) currentCoins.push(coin);
         correctTotal = coin.value * count;
-        questionText = count + " × " + formatValue(coin.value);
+        steps.push(count + " × " + formatValue(coin.value));
+        steps.push((count * coin.value) + "p");
     }
 
     if (mode === "mixed") {
-        const baseCoin = coins[randomInt(0, coins.length - 1)];
+        const base = coins[randomInt(0, coins.length - 1)];
         const multCount = randomInt(2, 4);
+        let expression = "(" + multCount + " × " + formatValue(base.value) + ")";
+        let expanded = (multCount * base.value) + "p";
 
-        for (let i = 0; i < multCount; i++) {
-            currentCoins.push(baseCoin);
-        }
-        correctTotal += baseCoin.value * multCount;
-        questionText = "(" + multCount + " × " + formatValue(baseCoin.value) + ")";
+        for (let i = 0; i < multCount; i++) currentCoins.push(base);
+        correctTotal += base.value * multCount;
 
         const extras = randomInt(1, 2);
         for (let i = 0; i < extras; i++) {
-            const extra = coins[randomInt(0, coins.length - 1)];
-            currentCoins.push(extra);
-            correctTotal += extra.value;
-            questionText += " + " + formatValue(extra.value);
+            const e = coins[randomInt(0, coins.length - 1)];
+            currentCoins.push(e);
+            correctTotal += e.value;
+            expression += " + " + formatValue(e.value);
+            expanded += " + " + e.value + "p";
         }
+
+        steps.push(expression);
+        steps.push(expanded);
     }
 
-    document.getElementById("question").textContent = questionText;
+    steps.push(correctTotal + "p");
+
+    document.getElementById("question").textContent = steps[0];
     renderCoins();
+    updateAnswerAffixes();
 
     if (timerOn) startTimer();
 }
 
 function renderCoins() {
-    const container = document.getElementById("coins");
-    container.innerHTML = "";
-    currentCoins.forEach(c => {
+    const c = document.getElementById("coins");
+    c.innerHTML = "";
+    currentCoins.forEach(x => {
         const img = document.createElement("img");
-        img.src = c.img;
+        img.src = x.img;
         img.className = "coin";
-        container.appendChild(img);
+        c.appendChild(img);
     });
 }
 
 function formatValue(pence) {
     return pence >= 100 ? "£" + (pence / 100) : pence + "p";
+}
+
+function updateAnswerAffixes() {
+    document.getElementById("prefix").textContent = currency === "pounds" ? "£" : "";
+    document.getElementById("suffix").textContent = currency === "pence" ? "p" : "";
 }
 
 function startTimer() {
@@ -266,6 +304,7 @@ function checkAnswer() {
         streak++;
         best = Math.max(best, streak);
         document.getElementById("feedback").textContent = "Correct! 🎉";
+        document.getElementById("solution").textContent = "";
         updateStats();
         setTimeout(generateQuestion, 1000);
     } else {
@@ -275,11 +314,12 @@ function checkAnswer() {
 
 function handleWrong() {
     document.getElementById("wrongSound").play();
-    document.getElementById("feedback").textContent =
-        "Not quite. Answer was " + correctTotal + "p";
+    document.getElementById("feedback").textContent = "Not quite. Here is how to work it out:";
+    document.getElementById("solution").textContent =
+        steps.map((s, i) => (i === 0 ? s : "= " + s)).join("\n");
     streak = 0;
     updateStats();
-    setTimeout(generateQuestion, 1500);
+    setTimeout(generateQuestion, 2500);
 }
 
 function updateStats() {
