@@ -2,47 +2,70 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cillian's Coin Maths Game</title>
+<title>Cillian's Coin GOAT Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
     font-family: Arial, sans-serif;
-    background: #f4f6fb;
-    text-align: center;
+    background: linear-gradient(135deg, #eef2f7, #d9e2ec);
+    min-height: 100vh;
+    margin: 0;
     padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#app {
+    background: #ffffff;
+    max-width: 720px;
+    width: 100%;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding: 24px 20px 28px 20px;
+    text-align: center;
 }
 
 h1 {
     color: #2c3e50;
+    margin-top: 0;
 }
 
 #controls {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 button {
-    font-size: 16px;
+    font-size: 15px;
     padding: 8px 12px;
     margin: 4px;
     cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid #ccd6e0;
+    background: #f7f9fc;
+}
+
+button:hover {
+    background: #eef3f8;
 }
 
 #question {
-    font-size: 20px;
-    margin: 10px 0;
+    font-size: 22px;
+    font-weight: bold;
+    margin: 14px 0;
 }
 
 #coins {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    margin: 15px 0;
+    margin: 18px 0;
 }
 
 .coin {
-    width: 70px;
-    height: 70px;
+    width: 72px;
+    height: 72px;
     margin: 8px;
 }
 
@@ -54,8 +77,8 @@ button {
 }
 
 #prefix, #suffix {
-    font-size: 20px;
-    margin: 0 4px;
+    font-size: 22px;
+    margin: 0 6px;
 }
 
 input {
@@ -63,11 +86,13 @@ input {
     padding: 6px;
     width: 120px;
     text-align: center;
+    border-radius: 6px;
+    border: 1px solid #cfd8e3;
 }
 
 #feedback {
     font-size: 20px;
-    margin-top: 10px;
+    margin-top: 12px;
     min-height: 24px;
 }
 
@@ -75,11 +100,12 @@ input {
     font-size: 18px;
     margin-top: 10px;
     white-space: pre-line;
+    color: #34495e;
 }
 
 #stats {
     font-size: 18px;
-    margin-top: 12px;
+    margin-top: 14px;
 }
 
 #timer {
@@ -88,16 +114,18 @@ input {
 }
 
 #trophy {
-    font-size: 60px;
+    font-size: 64px;
     display: none;
-    margin-top: 12px;
+    margin-top: 14px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Cillian's Coin Maths Game</h1>
+<div id="app">
+
+<h1>Cillian's Coin GOAT Game</h1>
 
 <div id="controls">
     <button onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
@@ -207,7 +235,7 @@ function generateQuestion() {
     const mode = modes[modeIndex];
 
     if (mode === "addition") {
-        const count = randomInt(1, 4);
+        const count = randomInt(2, 4);
         let parts = [];
         for (let i = 0; i < count; i++) {
             const c = coins[randomInt(0, coins.length - 1)];
@@ -230,11 +258,14 @@ function generateQuestion() {
     if (mode === "mixed") {
         const base = coins[randomInt(0, coins.length - 1)];
         const multCount = randomInt(2, 4);
+
+        for (let i = 0; i < multCount; i++) {
+            currentCoins.push(base);
+            correctTotal += base.value;
+        }
+
         let expression = "(" + multCount + " × " + formatValue(base.value) + ")";
         let expanded = (multCount * base.value) + "p";
-
-        for (let i = 0; i < multCount; i++) currentCoins.push(base);
-        correctTotal += base.value * multCount;
 
         const extras = randomInt(1, 2);
         for (let i = 0; i < extras; i++) {
@@ -332,5 +363,6 @@ function updateStats() {
 generateQuestion();
 </script>
 
+</div>
 </body>
 </html>
