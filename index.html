@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cillian's Coin GOAT Game</title>
+<title>UK Coin Maths Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -122,10 +122,9 @@ input {
 </head>
 
 <body>
-
 <div id="app">
 
-<h1>Cillian's Coin GOAT Game</h1>
+<h1>UK Coin Maths</h1>
 
 <div id="controls">
     <button onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
@@ -257,7 +256,7 @@ function generateQuestion() {
 
     if (mode === "mixed") {
         const base = coins[randomInt(0, coins.length - 1)];
-        const multCount = randomInt(2, 4);
+        let multCount = randomInt(2, 4);
 
         for (let i = 0; i < multCount; i++) {
             currentCoins.push(base);
@@ -269,11 +268,15 @@ function generateQuestion() {
 
         const extras = randomInt(1, 2);
         for (let i = 0; i < extras; i++) {
-            const e = coins[randomInt(0, coins.length - 1)];
-            currentCoins.push(e);
-            correctTotal += e.value;
-            expression += " + " + formatValue(e.value);
-            expanded += " + " + e.value + "p";
+            let extra;
+            do {
+                extra = coins[randomInt(0, coins.length - 1)];
+            } while (extra.value === base.value);
+
+            currentCoins.push(extra);
+            correctTotal += extra.value;
+            expression += " + " + formatValue(extra.value);
+            expanded += " + " + extra.value + "p";
         }
 
         steps.push(expression);
