@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cillian's Coin GOAT Game</title>
+<title>UK Coin Maths Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -19,7 +19,7 @@ body {
 
 #app {
     background: #ffffff;
-    max-width: 720px;
+    max-width: 760px;
     width: 100%;
     border-radius: 14px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.12);
@@ -50,6 +50,11 @@ button:hover {
     background: #eef3f8;
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 #question {
     font-size: 22px;
     font-weight: bold;
@@ -69,11 +74,19 @@ button:hover {
     margin: 8px;
 }
 
+#answerRow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
 #answerBox {
     display: inline-flex;
     align-items: center;
     font-size: 18px;
-    margin-top: 10px;
 }
 
 #prefix, #suffix {
@@ -84,7 +97,7 @@ button:hover {
 input {
     font-size: 18px;
     padding: 6px;
-    width: 120px;
+    width: 130px;
     text-align: center;
     border-radius: 6px;
     border: 1px solid #cfd8e3;
@@ -96,11 +109,45 @@ input {
     min-height: 24px;
 }
 
+#solutionWrap {
+    margin-top: 10px;
+    display: none;
+}
+
+#solutionCard {
+    background: #f7f9fc;
+    border: 1px solid #dde6f0;
+    border-radius: 10px;
+    padding: 12px 12px;
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+#solutionTitle {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 6px;
+}
+
 #solution {
     font-size: 18px;
-    margin-top: 10px;
     white-space: pre-line;
     color: #34495e;
+    line-height: 1.35;
+}
+
+#nextBtnWrap {
+    margin-top: 10px;
+}
+
+#nextBtn {
+    background: #e9f5ff;
+    border: 1px solid #bcdfff;
+}
+
+#nextBtn:hover {
+    background: #dff0ff;
 }
 
 #stats {
@@ -124,27 +171,38 @@ input {
 <body>
 <div id="app">
 
-<h1>Cillian's Coin GOAT Game</h1>
+<h1>UK Coin Maths</h1>
 
 <div id="controls">
-    <button onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
-    <button onclick="toggleCurrency()">Answer in: <span id="currencyLabel">pence</span></button>
-    <button onclick="toggleTimer()">Timer: <span id="timerLabel">Off</span></button>
-    <button onclick="resetGame()">Reset</button>
+    <button id="modeBtn" onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
+    <button id="currencyBtn" onclick="toggleCurrency()">Answer in: <span id="currencyLabel">pence</span></button>
+    <button id="timerBtn" onclick="toggleTimer()">Timer: <span id="timerLabel">Off</span></button>
+    <button id="resetBtn" onclick="resetGame()">Reset</button>
 </div>
 
 <div id="question"></div>
 <div id="coins"></div>
 
-<div id="answerBox">
-    <span id="prefix"></span>
-    <input type="number" id="answer">
-    <span id="suffix"></span>
-    <button onclick="checkAnswer()">Check</button>
+<div id="answerRow">
+    <div id="answerBox">
+        <span id="prefix"></span>
+        <input type="number" id="answer">
+        <span id="suffix"></span>
+    </div>
+    <button id="checkBtn" onclick="checkAnswer()">Check</button>
 </div>
 
 <div id="feedback"></div>
-<div id="solution"></div>
+
+<div id="solutionWrap">
+    <div id="solutionCard">
+        <div id="solutionTitle">Worked solution</div>
+        <div id="solution"></div>
+        <div id="nextBtnWrap">
+            <button id="nextBtn" onclick="acknowledgeSolution()">I Got It! - Next Question Please</button>
+        </div>
+    </div>
+</div>
 
 <div id="stats">
     Streak: <span id="streak">0</span> |
@@ -174,8 +232,9 @@ const coins = [
     { value: 200, img: "coins/2pound.png" }
 ];
 
-let modes = ["addition", "multiplication", "mixed"];
+let modes = ["addition", "multiplication", "mixed", "random"];
 let modeIndex = 0;
+
 let currency = "pence";
 let timerOn = false;
 
@@ -189,99 +248,147 @@ let best = 0;
 let timeLeft = 0;
 let timerInterval = null;
 
+let lockedOnSolution = false;
+
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function modeLabelFromKey(key) {
+    if (key === "addition") return "Addition";
+    if (key === "multiplication") return "Multiplication";
+    if (key === "mixed") return "Mixed";
+    if (key === "random") return "Random";
+    return key;
+}
+
+function setControlsEnabled(enabled) {
+    document.getElementById("modeBtn").disabled = !enabled;
+    document.getElementById("currencyBtn").disabled = !enabled;
+    document.getElementById("timerBtn").disabled = !enabled;
+    document.getElementById("resetBtn").disabled = !enabled;
+    document.getElementById("checkBtn").disabled = !enabled;
+    document.getElementById("answer").disabled = !enabled;
+}
+
 function toggleMode() {
+    if (lockedOnSolution) return;
     modeIndex = (modeIndex + 1) % modes.length;
-    document.getElementById("modeLabel").textContent =
-        modes[modeIndex].charAt(0).toUpperCase() + modes[modeIndex].slice(1);
+    document.getElementById("modeLabel").textContent = modeLabelFromKey(modes[modeIndex]);
     generateQuestion();
 }
 
 function toggleCurrency() {
+    if (lockedOnSolution) return;
     currency = currency === "pence" ? "pounds" : "pence";
     document.getElementById("currencyLabel").textContent = currency;
     updateAnswerAffixes();
 }
 
 function toggleTimer() {
+    if (lockedOnSolution) return;
     timerOn = !timerOn;
     document.getElementById("timerLabel").textContent = timerOn ? "On" : "Off";
     generateQuestion();
 }
 
 function resetGame() {
+    if (lockedOnSolution) {
+        lockedOnSolution = false;
+        setControlsEnabled(true);
+    }
     streak = 0;
     best = 0;
     document.getElementById("streak").textContent = 0;
     document.getElementById("best").textContent = 0;
     document.getElementById("trophy").style.display = "none";
+    hideSolution();
     generateQuestion();
+}
+
+function hideSolution() {
+    document.getElementById("solutionWrap").style.display = "none";
+    document.getElementById("solution").textContent = "";
+}
+
+function showSolution() {
+    document.getElementById("solutionWrap").style.display = "block";
+}
+
+function generateAdditionProblem() {
+    const count = randomInt(2, 4);
+    let parts = [];
+    for (let i = 0; i < count; i++) {
+        const c = coins[randomInt(0, coins.length - 1)];
+        currentCoins.push(c);
+        correctTotal += c.value;
+        parts.push(formatValue(c.value));
+    }
+    steps.push(parts.join(" + "));
+}
+
+function generateMultiplicationProblem() {
+    const coin = coins[randomInt(0, coins.length - 1)];
+    const count = randomInt(2, 4);
+    for (let i = 0; i < count; i++) currentCoins.push(coin);
+    correctTotal = coin.value * count;
+    steps.push(count + " × " + formatValue(coin.value));
+    steps.push((count * coin.value) + "p");
+}
+
+function generateMixedProblem() {
+    const base = coins[randomInt(0, coins.length - 1)];
+    const multCount = randomInt(2, 4);
+
+    for (let i = 0; i < multCount; i++) {
+        currentCoins.push(base);
+        correctTotal += base.value;
+    }
+
+    let expression = "(" + multCount + " × " + formatValue(base.value) + ")";
+    let expanded = (multCount * base.value) + "p";
+
+    const extras = randomInt(1, 2);
+    for (let i = 0; i < extras; i++) {
+        let extra;
+        do {
+            extra = coins[randomInt(0, coins.length - 1)];
+        } while (extra.value === base.value);
+
+        currentCoins.push(extra);
+        correctTotal += extra.value;
+        expression += " + " + formatValue(extra.value);
+        expanded += " + " + extra.value + "p";
+    }
+
+    steps.push(expression);
+    steps.push(expanded);
 }
 
 function generateQuestion() {
     clearInterval(timerInterval);
     document.getElementById("timer").textContent = "";
     document.getElementById("feedback").textContent = "";
-    document.getElementById("solution").textContent = "";
     document.getElementById("answer").value = "";
+    hideSolution();
+
+    lockedOnSolution = false;
+    setControlsEnabled(true);
+
     currentCoins = [];
     steps = [];
     correctTotal = 0;
 
-    const mode = modes[modeIndex];
+    let mode = modes[modeIndex];
 
-    if (mode === "addition") {
-        const count = randomInt(2, 4);
-        let parts = [];
-        for (let i = 0; i < count; i++) {
-            const c = coins[randomInt(0, coins.length - 1)];
-            currentCoins.push(c);
-            correctTotal += c.value;
-            parts.push(formatValue(c.value));
-        }
-        steps.push(parts.join(" + "));
+    if (mode === "random") {
+        const pick = randomInt(0, 2);
+        mode = pick === 0 ? "addition" : (pick === 1 ? "multiplication" : "mixed");
     }
 
-    if (mode === "multiplication") {
-        const coin = coins[randomInt(0, coins.length - 1)];
-        const count = randomInt(2, 4);
-        for (let i = 0; i < count; i++) currentCoins.push(coin);
-        correctTotal = coin.value * count;
-        steps.push(count + " × " + formatValue(coin.value));
-        steps.push((count * coin.value) + "p");
-    }
-
-    if (mode === "mixed") {
-        const base = coins[randomInt(0, coins.length - 1)];
-        let multCount = randomInt(2, 4);
-
-        for (let i = 0; i < multCount; i++) {
-            currentCoins.push(base);
-            correctTotal += base.value;
-        }
-
-        let expression = "(" + multCount + " × " + formatValue(base.value) + ")";
-        let expanded = (multCount * base.value) + "p";
-
-        const extras = randomInt(1, 2);
-        for (let i = 0; i < extras; i++) {
-            let extra;
-            do {
-                extra = coins[randomInt(0, coins.length - 1)];
-            } while (extra.value === base.value);
-
-            currentCoins.push(extra);
-            correctTotal += extra.value;
-            expression += " + " + formatValue(extra.value);
-            expanded += " + " + extra.value + "p";
-        }
-
-        steps.push(expression);
-        steps.push(expanded);
-    }
+    if (mode === "addition") generateAdditionProblem();
+    if (mode === "multiplication") generateMultiplicationProblem();
+    if (mode === "mixed") generateMixedProblem();
 
     steps.push(correctTotal + "p");
 
@@ -326,6 +433,8 @@ function startTimer() {
 }
 
 function checkAnswer() {
+    if (lockedOnSolution) return;
+
     let input = parseFloat(document.getElementById("answer").value);
     if (isNaN(input)) return;
 
@@ -338,30 +447,54 @@ function checkAnswer() {
         streak++;
         best = Math.max(best, streak);
         document.getElementById("feedback").textContent = "Correct! 🎉";
-        document.getElementById("solution").textContent = "";
         updateStats();
-        setTimeout(generateQuestion, 1000);
+        setTimeout(generateQuestion, 900);
     } else {
         handleWrong();
     }
 }
 
 function handleWrong() {
+    if (lockedOnSolution) return;
+
+    clearInterval(timerInterval);
     document.getElementById("wrongSound").play();
     document.getElementById("feedback").textContent = "Not quite. Here is how to work it out:";
+
     document.getElementById("solution").textContent =
         steps.map((s, i) => (i === 0 ? s : "= " + s)).join("\n");
+
+    showSolution();
+
     streak = 0;
     updateStats();
-    setTimeout(generateQuestion, 2500);
+
+    lockedOnSolution = true;
+    setControlsEnabled(false);
+    document.getElementById("resetBtn").disabled = false;
+}
+
+function acknowledgeSolution() {
+    lockedOnSolution = false;
+    setControlsEnabled(true);
+    hideSolution();
+    generateQuestion();
 }
 
 function updateStats() {
     document.getElementById("streak").textContent = streak;
     document.getElementById("best").textContent = best;
-    document.getElementById("trophy").style.display =
-        streak >= 10 ? "block" : "none";
+    document.getElementById("trophy").style.display = streak >= 10 ? "block" : "none";
 }
+
+document.getElementById("modeLabel").textContent = modeLabelFromKey(modes[modeIndex]);
+document.getElementById("currencyLabel").textContent = currency;
+document.getElementById("timerLabel").textContent = timerOn ? "On" : "Off";
+updateAnswerAffixes();
+
+document.getElementById("answer").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") checkAnswer();
+});
 
 generateQuestion();
 </script>
