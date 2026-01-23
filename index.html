@@ -2,222 +2,309 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>UK Coin Maths Game</title>
+<title>Cillian's Coin GOAT Game</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
+:root{
+    --bg1:#eef2f7;
+    --bg2:#d9e2ec;
+    --card:#ffffff;
+    --text:#243447;
+    --muted:#6b7b8b;
+    --border:#dde6f0;
+    --shadow: rgba(0,0,0,0.12);
+    --btn:#f7f9fc;
+    --btnHover:#eef3f8;
+    --accent:#e9f5ff;
+    --accentBorder:#bcdfff;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+    margin:0;
     font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #eef2f7, #d9e2ec);
-    min-height: 100vh;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
+    color: var(--text);
+    background:
+        radial-gradient(1200px 600px at 15% 10%, rgba(255,255,255,0.8), rgba(255,255,255,0) 60%),
+        radial-gradient(900px 500px at 85% 20%, rgba(255,255,255,0.65), rgba(255,255,255,0) 55%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+    min-height:100vh;
+    padding:20px;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
 }
 
-#app {
-    background: #ffffff;
-    max-width: 900px;
-    width: 100%;
+#app{
+    width:100%;
+    max-width: 980px;
+    background: var(--card);
     border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-    padding: 24px 20px 28px 20px;
-    text-align: center;
+    box-shadow: 0 10px 30px var(--shadow);
+    padding: 22px 18px 26px 18px;
+    text-align:center;
 }
 
-h1 {
-    color: #2c3e50;
-    margin-top: 0;
+h1{
+    margin: 0 0 8px 0;
+    color:#2c3e50;
+    letter-spacing: 0.2px;
 }
 
-#controls {
-    margin-bottom: 18px;
+#subhead{
+    margin: 0 0 14px 0;
+    color: var(--muted);
+    font-size: 14px;
 }
 
-button {
+#controls{
+    margin: 10px 0 16px 0;
+}
+
+button{
     font-size: 15px;
     padding: 8px 12px;
     margin: 4px;
     cursor: pointer;
     border-radius: 8px;
     border: 1px solid #ccd6e0;
-    background: #f7f9fc;
+    background: var(--btn);
 }
 
-button:hover { background: #eef3f8; }
-button:disabled { cursor: not-allowed; opacity: 0.6; }
+button:hover{ background: var(--btnHover); }
+button:disabled{ cursor:not-allowed; opacity:0.6; }
 
-#question {
+#question{
     font-size: 22px;
-    font-weight: bold;
-    margin: 14px 0;
+    font-weight: 700;
+    margin: 12px 0 6px 0;
 }
 
-#coins {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 18px 0;
+#helperLine{
+    margin: 0 0 10px 0;
+    color: var(--muted);
+    font-size: 14px;
+    min-height: 18px;
 }
 
-.coin {
+#coins{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-wrap:wrap;
+    gap: 10px;
+    margin: 16px 0 10px 0;
+    padding: 6px 0;
+    position: relative;
+}
+
+.coinWrap{
+    width: 86px;
+    height: 86px;
+    border-radius: 999px;
+    border: 4px solid var(--ring, #cfd8e3);
+    background: rgba(255,255,255,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    transition: border-color 240ms ease, transform 240ms ease;
+}
+
+.coinWrap.groupStart{
+    margin-left: 18px;
+}
+
+.coinImg{
     width: 72px;
     height: 72px;
-    margin: 6px;
+    border-radius: 999px;
+    object-fit: cover;
 }
 
-#dividerSymbol {
+#dividerSymbol{
+    font-weight: 800;
+    color:#51606f;
     font-size: 26px;
-    font-weight: bold;
-    color: #51606f;
-    margin: 0 6px;
+    margin: 0 4px;
+    user-select: none;
 }
 
-#answerRow {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#answerRow{
+    display:flex;
+    justify-content:center;
+    align-items:center;
     gap: 10px;
-    flex-wrap: wrap;
+    flex-wrap:wrap;
     margin-top: 10px;
 }
 
-#answerBox {
-    display: inline-flex;
-    align-items: center;
+#answerBox{
+    display:inline-flex;
+    align-items:center;
     font-size: 18px;
 }
 
-#prefix, #suffix {
+#prefix, #suffix{
     font-size: 22px;
     margin: 0 6px;
     min-width: 20px;
-    text-align: center;
+    text-align:center;
 }
 
-input {
-    font-size: 18px;
-    padding: 6px;
+input{
     width: 160px;
-    text-align: center;
-    border-radius: 6px;
+    font-size: 18px;
+    padding: 7px;
+    border-radius: 8px;
     border: 1px solid #cfd8e3;
+    text-align:center;
 }
 
-#feedback {
+#feedback{
     font-size: 20px;
     margin-top: 12px;
-    min-height: 24px;
+    min-height: 26px;
 }
 
-#solutionWrap {
+#solutionWrap{
     margin-top: 12px;
-    display: none;
+    display:none;
 }
 
-#solutionCard {
+#solutionCard{
     background: #f7f9fc;
-    border: 1px solid #dde6f0;
-    border-radius: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
     padding: 14px 14px;
-    max-width: 820px;
+    max-width: 900px;
     margin: 0 auto;
-    text-align: left;
+    text-align:left;
 }
 
-#solutionTitle {
-    font-weight: bold;
-    color: #2c3e50;
+#solutionTitle{
+    font-weight: 800;
+    color:#2c3e50;
     margin-bottom: 8px;
 }
 
-#solution {
-    font-size: 18px;
+#solution{
+    font-size: 17px;
     white-space: pre-line;
     color: #34495e;
-    line-height: 1.4;
+    line-height: 1.45;
 }
 
-#nextBtnWrap {
+#sumAnim{
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #d7e2ee;
+    font-size: 17px;
+    white-space: pre-line;
+    color: #2f3f52;
+    line-height: 1.45;
+    min-height: 42px;
+}
+
+#nextBtnWrap{
     margin-top: 12px;
-    text-align: center;
+    text-align:center;
 }
 
-#nextBtn {
-    background: #e9f5ff;
-    border: 1px solid #bcdfff;
+#nextBtn{
+    background: var(--accent);
+    border: 1px solid var(--accentBorder);
 }
 
-#nextBtn:hover { background: #dff0ff; }
+#nextBtn:hover{ background: #dff0ff; }
 
-#stats {
+#stats{
     font-size: 18px;
     margin-top: 14px;
 }
 
-#timer {
+#timer{
     font-size: 18px;
     margin-top: 8px;
+    color: #2c3e50;
 }
 
-#trophy {
+#trophy{
     font-size: 64px;
-    display: none;
+    display:none;
     margin-top: 14px;
+}
+
+.pulseHint{
+    animation: pulseHint 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseHint{
+    0%{ transform: scale(1); }
+    50%{ transform: scale(1.04); }
+    100%{ transform: scale(1); }
 }
 </style>
 </head>
 
 <body>
 <div id="app">
+    <h1>Cillian's Coin GOAT Game</h1>
+    <div id="subhead">Add coins, use multiplication, try mixed questions, and practise subdivision.</div>
 
-<h1>UK Coin Maths</h1>
-
-<div id="controls">
-    <button id="modeBtn" onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
-    <button id="currencyBtn" onclick="toggleCurrency()">Answer in: <span id="currencyLabel">pence</span></button>
-    <button id="timerBtn" onclick="toggleTimer()">Timer: <span id="timerLabel">Off</span></button>
-    <button id="resetBtn" onclick="resetGame()">Reset</button>
-</div>
-
-<div id="question"></div>
-<div id="coins"></div>
-
-<div id="answerRow">
-    <div id="answerBox">
-        <span id="prefix"></span>
-        <input type="number" id="answer" inputmode="numeric">
-        <span id="suffix"></span>
+    <div id="controls">
+        <button id="modeBtn" onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
+        <button id="currencyBtn" onclick="toggleCurrency()">Answer in: <span id="currencyLabel">pence</span></button>
+        <button id="timerBtn" onclick="toggleTimer()">Timer: <span id="timerLabel">Off</span></button>
+        <button id="resetBtn" onclick="resetGame()">Reset</button>
     </div>
-    <button id="checkBtn" onclick="checkAnswer()">Check</button>
-</div>
 
-<div id="feedback"></div>
+    <div id="question"></div>
+    <div id="helperLine"></div>
 
-<div id="solutionWrap">
-    <div id="solutionCard">
-        <div id="solutionTitle">Worked solution - best method</div>
-        <div id="solution"></div>
-        <div id="nextBtnWrap">
-            <button id="nextBtn" onclick="acknowledgeSolution()">I Got It! - Next Question Please</button>
+    <div id="coins"></div>
+
+    <div id="answerRow">
+        <div id="answerBox">
+            <span id="prefix"></span>
+            <input type="number" id="answer" inputmode="numeric" />
+            <span id="suffix"></span>
+        </div>
+        <button id="checkBtn" onclick="checkAnswer()">Check</button>
+    </div>
+
+    <div id="feedback"></div>
+
+    <div id="solutionWrap">
+        <div id="solutionCard">
+            <div id="solutionTitle">Worked solution - best method</div>
+            <div id="solution"></div>
+            <div id="sumAnim"></div>
+            <div id="nextBtnWrap">
+                <button id="nextBtn" onclick="acknowledgeSolution()">I Got It! - Next Question Please</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="stats">
-    Streak: <span id="streak">0</span> |
-    Best: <span id="best">0</span>
-</div>
+    <div id="stats">
+        Streak: <span id="streak">0</span> | Best: <span id="best">0</span>
+    </div>
 
-<div id="timer"></div>
-<div id="trophy">🏆</div>
+    <div id="timer"></div>
+    <div id="trophy">🏆</div>
+
+    <audio id="correctSound">
+        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=">
+    </audio>
+    <audio id="wrongSound">
+        <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=">
+    </audio>
+</div>
 
 <script>
-const coins = [
+const COINS = [
     { value: 1, img: "coins/1p.jpg" },
     { value: 2, img: "coins/2p.jpg" },
     { value: 5, img: "coins/5p.jpg" },
@@ -228,16 +315,30 @@ const coins = [
     { value: 200, img: "coins/2pound.png" }
 ];
 
+const RING_COLOURS = {
+    200: "#7C3AED",  // £2
+    100: "#2563EB",  // £1
+    50:  "#F59E0B",  // 50p
+    20:  "#10B981",  // 20p
+    10:  "#EF4444",  // 10p
+    5:   "#8B5CF6",  // 5p
+    2:   "#06B6D4",  // 2p
+    1:   "#64748B"   // 1p
+};
+
+const valueToCoin = new Map(COINS.map(c => [c.value, c]));
+
 let modes = ["addition", "multiplication", "mixed", "subdivision", "random"];
 let modeIndex = 0;
 
-let currency = "pence";
+let currency = "pence";         // "pence" or "pounds"
 let timerOn = false;
 
-let currentCoins = [];
-let correctTotal = 0;
-let correctCount = 0;
-let answerType = "money";
+let currentCoins = [];          // array of coin objects shown
+let answerType = "money";       // "money" or "count"
+let correctTotal = 0;           // in pence
+let correctCount = 0;           // for subdivision count
+let subdivisionTarget = null;   // target coin value for type2 subdivision
 
 let streak = 0;
 let best = 0;
@@ -246,219 +347,492 @@ let lockedOnSolution = false;
 let timerInterval = null;
 let timeLeft = 0;
 
-/* ---------- Utilities ---------- */
+let animTimeouts = [];
+let groupingActive = false;
 
-function randomInt(min, max) {
+/* ---------- DOM ---------- */
+const coinsDiv = document.getElementById("coins");
+const questionEl = document.getElementById("question");
+const helperEl = document.getElementById("helperLine");
+const answerEl = document.getElementById("answer");
+const feedbackEl = document.getElementById("feedback");
+const solutionWrapEl = document.getElementById("solutionWrap");
+const solutionEl = document.getElementById("solution");
+const sumAnimEl = document.getElementById("sumAnim");
+const prefixEl = document.getElementById("prefix");
+const suffixEl = document.getElementById("suffix");
+const modeLabelEl = document.getElementById("modeLabel");
+const currencyLabelEl = document.getElementById("currencyLabel");
+const timerLabelEl = document.getElementById("timerLabel");
+const timerEl = document.getElementById("timer");
+const trophyEl = document.getElementById("trophy");
+const currencyBtn = document.getElementById("currencyBtn");
+
+const correctSound = document.getElementById("correctSound");
+const wrongSound = document.getElementById("wrongSound");
+
+/* ---------- Helpers ---------- */
+function randomInt(min, max){
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function formatValue(pence) {
+function modeLabelFromKey(key){
+    if (key === "addition") return "Addition";
+    if (key === "multiplication") return "Multiplication";
+    if (key === "mixed") return "Mixed";
+    if (key === "subdivision") return "Subdivision";
+    if (key === "random") return "Random";
+    return key;
+}
+
+function formatValue(pence){
     return pence >= 100 ? "£" + (pence / 100) : pence + "p";
 }
 
-function penceToPoundsString(pence) {
+function penceToPoundsString(pence){
     return "£" + (pence / 100).toFixed(2);
 }
 
-function updateAnswerAffixes() {
-    if (answerType !== "money") {
-        prefix.textContent = "";
-        suffix.textContent = "";
+function clearAllTimeouts(){
+    for (const t of animTimeouts) clearTimeout(t);
+    animTimeouts = [];
+}
+
+function clearTimer(){
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    timerEl.textContent = "";
+}
+
+function updateStats(){
+    document.getElementById("streak").textContent = streak;
+    document.getElementById("best").textContent = best;
+    trophyEl.style.display = streak >= 10 ? "block" : "none";
+}
+
+function updateAnswerAffixes(){
+    if (answerType !== "money"){
+        prefixEl.textContent = "";
+        suffixEl.textContent = "";
         currencyBtn.disabled = true;
         return;
     }
     currencyBtn.disabled = false;
-    prefix.textContent = currency === "pounds" ? "£" : "";
-    suffix.textContent = currency === "pence" ? "p" : "";
+    prefixEl.textContent = currency === "pounds" ? "£" : "";
+    suffixEl.textContent = currency === "pence" ? "p" : "";
 }
 
-/* ---------- Rendering ---------- */
+function setControlsEnabled(enabled){
+    document.getElementById("modeBtn").disabled = !enabled;
+    document.getElementById("timerBtn").disabled = !enabled;
+    document.getElementById("resetBtn").disabled = !enabled;
+    document.getElementById("checkBtn").disabled = !enabled;
+    answerEl.disabled = !enabled;
 
-function renderCoins(showDivider=false) {
+    const currencyEnabled = enabled && (answerType === "money");
+    currencyBtn.disabled = !currencyEnabled;
+}
+
+function hideSolution(){
+    solutionWrapEl.style.display = "none";
+    solutionEl.textContent = "";
+    sumAnimEl.textContent = "";
+}
+
+function showSolution(){
+    solutionWrapEl.style.display = "block";
+}
+
+/* ---------- Rendering coins with colour rings ---------- */
+function renderCoins(options = {}){
+    const { showDivider=false, dividerText="in" } = options;
+
     coinsDiv.innerHTML = "";
-    if (!showDivider) {
-        currentCoins.forEach(c => {
+    groupingActive = false;
+
+    if (!showDivider){
+        currentCoins.forEach((c, idx) => {
+            const wrap = document.createElement("div");
+            wrap.className = "coinWrap";
+            wrap.dataset.value = String(c.value);
+            wrap.dataset.idx = String(idx);
+            wrap.style.setProperty("--ring", RING_COLOURS[c.value] || "#cfd8e3");
+
             const img = document.createElement("img");
+            img.className = "coinImg";
             img.src = c.img;
-            img.className = "coin";
-            coinsDiv.appendChild(img);
+
+            wrap.appendChild(img);
+            coinsDiv.appendChild(wrap);
         });
         return;
     }
 
+    const left = currentCoins[0];
+    const right = currentCoins[1];
+
+    const wrapL = document.createElement("div");
+    wrapL.className = "coinWrap";
+    wrapL.dataset.value = String(left.value);
+    wrapL.style.setProperty("--ring", RING_COLOURS[left.value] || "#cfd8e3");
     const imgL = document.createElement("img");
-    imgL.src = currentCoins[0].img;
-    imgL.className = "coin";
-    coinsDiv.appendChild(imgL);
+    imgL.className = "coinImg";
+    imgL.src = left.img;
+    wrapL.appendChild(imgL);
 
     const div = document.createElement("div");
     div.id = "dividerSymbol";
-    div.textContent = "in";
-    coinsDiv.appendChild(div);
+    div.textContent = dividerText;
 
+    const wrapR = document.createElement("div");
+    wrapR.className = "coinWrap";
+    wrapR.dataset.value = String(right.value);
+    wrapR.style.setProperty("--ring", RING_COLOURS[right.value] || "#cfd8e3");
     const imgR = document.createElement("img");
-    imgR.src = currentCoins[1].img;
-    imgR.className = "coin";
-    coinsDiv.appendChild(imgR);
+    imgR.className = "coinImg";
+    imgR.src = right.img;
+    wrapR.appendChild(imgR);
+
+    coinsDiv.appendChild(wrapL);
+    coinsDiv.appendChild(div);
+    coinsDiv.appendChild(wrapR);
 }
 
-/* ---------- Teaching Solution Builders ---------- */
+/* ---------- FLIP animation for grouping ---------- */
+function animateGroupCoins(){
+    // Only animate when we have multiple coinWrap elements (not the divider layout).
+    const wraps = Array.from(coinsDiv.querySelectorAll(".coinWrap"));
+    if (wraps.length < 2) return;
 
-function buildCoinCounts() {
+    // Capture first positions
+    const first = new Map();
+    wraps.forEach(el => first.set(el, el.getBoundingClientRect()));
+
+    // Sort by value desc, then stable by original idx
+    wraps.sort((a, b) => {
+        const va = parseInt(a.dataset.value, 10);
+        const vb = parseInt(b.dataset.value, 10);
+        if (vb !== va) return vb - va;
+        return parseInt(a.dataset.idx, 10) - parseInt(b.dataset.idx, 10);
+    });
+
+    // Mark group starts for spacing
+    let lastV = null;
+    wraps.forEach(el => el.classList.remove("groupStart"));
+    wraps.forEach(el => {
+        const v = parseInt(el.dataset.value, 10);
+        if (lastV !== null && v !== lastV) el.classList.add("groupStart");
+        lastV = v;
+    });
+
+    // Reorder DOM
+    wraps.forEach(el => coinsDiv.appendChild(el));
+
+    // Capture last positions and animate
+    wraps.forEach(el => {
+        const f = first.get(el);
+        const l = el.getBoundingClientRect();
+        const dx = f.left - l.left;
+        const dy = f.top - l.top;
+        el.style.transform = "translate(" + dx + "px," + dy + "px)";
+        el.style.transition = "transform 0s";
+    });
+
+    // Trigger reflow then animate to identity
+    coinsDiv.offsetHeight;
+
+    wraps.forEach(el => {
+        el.style.transition = "transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1)";
+        el.style.transform = "translate(0px,0px)";
+    });
+
+    // Small pulse hint after grouping finishes
+    animTimeouts.push(setTimeout(() => {
+        wraps.forEach(el => el.classList.add("pulseHint"));
+        animTimeouts.push(setTimeout(() => wraps.forEach(el => el.classList.remove("pulseHint")), 1200));
+    }, 560));
+
+    groupingActive = true;
+}
+
+/* ---------- Teaching solutions (text + animated running total) ---------- */
+function buildCoinCountsFromCurrent(){
     const map = new Map();
     currentCoins.forEach(c => map.set(c.value, (map.get(c.value) || 0) + 1));
     return map;
 }
 
-function buildMoneyTeachingSolution() {
-    const counts = buildCoinCounts();
+function buildMoneyTeachingSolutionText(){
+    const counts = buildCoinCountsFromCurrent();
     const values = Array.from(counts.keys()).sort((a,b)=>b-a);
-    let running = 0;
-    const lines = [];
 
+    const lines = [];
     lines.push("Step 1: Group the same coins");
     lines.push(values.map(v => {
         const n = counts.get(v);
         return n > 1 ? n + " × " + formatValue(v) : formatValue(v);
     }).join(" + "));
     lines.push("");
-
     lines.push("Step 2: Do any easy multiplication");
     values.forEach(v => {
         const n = counts.get(v);
         if (n > 1) lines.push(n + " × " + v + "p = " + (n*v) + "p");
     });
     lines.push("");
+    lines.push("Step 3: Add from biggest to smallest");
+    lines.push("Use a running total so you do not lose track.");
+    lines.push("");
+    lines.push("Final answer: " + correctTotal + "p (" + penceToPoundsString(correctTotal) + ")");
+    return lines.join("\n");
+}
 
-    lines.push("Step 3: Add from biggest to smallest (running total)");
+function startRunningTotalAnimation(){
+    clearAllTimeouts();
+    sumAnimEl.textContent = "";
+
+    if (answerType !== "money") return;
+
+    const counts = buildCoinCountsFromCurrent();
+    const values = Array.from(counts.keys()).sort((a,b)=>b-a);
+
+    let running = 0;
+    const lines = [];
+    lines.push("Running total:");
+
+    // Build incremental steps
+    const steps = [];
     values.forEach(v => {
         const n = counts.get(v);
         const subtotal = n * v;
         running += subtotal;
-        lines.push((n>1 ? n+" × ":"") + v + "p = " + subtotal + "p, total = " + running + "p");
+        const left = (n > 1) ? (n + " × " + v + "p") : (v + "p");
+        steps.push(left + " = " + subtotal + "p, total = " + running + "p");
     });
-    lines.push("");
 
-    lines.push("Final answer: " + correctTotal + "p");
-    lines.push("That is " + penceToPoundsString(correctTotal));
-    return lines.join("\n");
+    // Animate: reveal one line every 520ms
+    let i = 0;
+    sumAnimEl.textContent = lines.join("\n");
+    animTimeouts.push(setTimeout(() => {
+        function tick(){
+            if (i >= steps.length){
+                sumAnimEl.textContent = "Running total:\n" + steps.join("\n") + "\n\nFinal: " + correctTotal + "p (" + penceToPoundsString(correctTotal) + ")";
+                return;
+            }
+            const shown = steps.slice(0, i+1);
+            sumAnimEl.textContent = "Running total:\n" + shown.join("\n");
+            i += 1;
+            animTimeouts.push(setTimeout(tick, 520));
+        }
+        tick();
+    }, 420));
 }
 
-function buildSubdivisionTeachingSolution() {
+function buildSubdivisionTeachingSolutionText(){
     const lines = [];
-    if (currentCoins.length === 2) {
+    if (currentCoins.length === 2){
         const small = currentCoins[0].value;
         const large = currentCoins[1].value;
         const answer = Math.round(large / small);
-        lines.push("Step 1: Write both values in pence");
+        lines.push("Step 1: Put both values in pence");
         lines.push(large + "p and " + small + "p");
         lines.push("");
         lines.push("Step 2: Divide");
         lines.push(large + "p ÷ " + small + "p = " + answer);
         lines.push("");
         lines.push("Step 3: Quick check");
-        lines.push(answer + " × " + small + "p = " + (answer*small) + "p");
+        lines.push(answer + " × " + small + "p = " + (answer * small) + "p");
         lines.push("");
         lines.push("Final answer: " + correctCount);
-    } else {
-        const total = currentCoins.reduce((a,c)=>a+c.value,0);
-        lines.push("Step 1: Find the total");
-        lines.push(currentCoins.map(c=>formatValue(c.value)).join(" + "));
-        lines.push("Total = " + total + "p");
-        lines.push("");
-        lines.push("Step 2: Divide by the coin value");
-        lines.push("Total ÷ coin value");
-        lines.push("");
-        lines.push("Step 3: Quick check");
-        lines.push("Answer × coin value = total");
-        lines.push("");
-        lines.push("Final answer: " + correctCount);
+        return lines.join("\n");
     }
+
+    // Type2: set of coins, target known
+    const total = currentCoins.reduce((a,c)=>a+c.value,0);
+    const target = subdivisionTarget || 1;
+
+    lines.push("Step 1: Find the total");
+    lines.push(currentCoins.map(c => formatValue(c.value)).join(" + "));
+    lines.push("Total = " + total + "p");
+    lines.push("");
+    lines.push("Step 2: Divide by the coin you want (" + formatValue(target) + ")");
+    lines.push(total + "p ÷ " + target + "p = " + Math.round(total / target));
+    lines.push("");
+    lines.push("Step 3: Quick check");
+    lines.push(correctCount + " × " + target + "p = " + (correctCount * target) + "p");
+    lines.push("");
+    lines.push("Final answer: " + correctCount);
     return lines.join("\n");
 }
 
-/* ---------- Problem Generators ---------- */
-
-function generateAddition() {
+/* ---------- Problem generators ---------- */
+function generateAddition(){
     answerType = "money";
     currentCoins = [];
     correctTotal = 0;
-    const count = randomInt(2,4);
-    for (let i=0;i<count;i++) {
-        const c = coins[randomInt(0, coins.length-1)];
+
+    const count = randomInt(2, 4);
+    for (let i=0;i<count;i++){
+        const c = COINS[randomInt(0, COINS.length-1)];
         currentCoins.push(c);
         correctTotal += c.value;
     }
-    question.textContent = "Add up the coins";
+
+    questionEl.textContent = "Add up the coins";
+    helperEl.textContent = currentCoins.map(c => formatValue(c.value)).join(" + ");
     renderCoins();
 }
 
-function generateMultiplication() {
+function generateMultiplication(){
     answerType = "money";
     currentCoins = [];
-    const c = coins[randomInt(0, coins.length-1)];
-    const n = randomInt(2,4);
+
+    const c = COINS[randomInt(0, COINS.length-1)];
+    const n = randomInt(2, 4);
     for (let i=0;i<n;i++) currentCoins.push(c);
     correctTotal = c.value * n;
-    question.textContent = n + " × " + formatValue(c.value);
+
+    questionEl.textContent = n + " × " + formatValue(c.value);
+    helperEl.textContent = "Think: " + formatValue(c.value) + " added " + n + " times";
     renderCoins();
 }
 
-function generateMixed() {
+function generateMixed(){
     answerType = "money";
     currentCoins = [];
     correctTotal = 0;
-    const base = coins[randomInt(0, coins.length-1)];
-    const n = randomInt(2,4);
-    for (let i=0;i<n;i++) {
+
+    const base = COINS[randomInt(0, COINS.length-1)];
+    const n = randomInt(2, 4);
+    for (let i=0;i<n;i++){
         currentCoins.push(base);
         correctTotal += base.value;
     }
+
     let expr = "(" + n + " × " + formatValue(base.value) + ")";
-    const extras = randomInt(1,2);
-    for (let i=0;i<extras;i++) {
+
+    const extras = randomInt(1, 2);
+    for (let i=0;i<extras;i++){
         let extra;
-        do { extra = coins[randomInt(0, coins.length-1)]; }
-        while (extra.value === base.value);
+        do { extra = COINS[randomInt(0, COINS.length-1)]; }
+        while (extra.value === base.value); // never repeat the base coin outside the multiplication
         currentCoins.push(extra);
         correctTotal += extra.value;
         expr += " + " + formatValue(extra.value);
     }
-    question.textContent = expr;
+
+    questionEl.textContent = expr;
+    helperEl.textContent = "Do the brackets first, then add the extra coin(s)";
     renderCoins();
 }
 
-function generateSubdivision() {
-    answerType = "count";
-    currentCoins = [];
-    const smallVals = [1,2,5,10,20,50];
-    const largeVals = [10,20,50,100,200];
+function pickSubdivisionPair(){
+    const smallChoices = [1,2,5,10,20,50];
+    const largeChoices = [10,20,50,100,200];
     let small, large;
-    do {
-        small = smallVals[randomInt(0, smallVals.length-1)];
-        large = largeVals[randomInt(0, largeVals.length-1)];
-    } while (large <= small || large % small !== 0);
-
-    const smallCoin = coins.find(c=>c.value===small);
-    const largeCoin = coins.find(c=>c.value===large);
-
-    currentCoins = [smallCoin, largeCoin];
-    correctCount = large / small;
-    question.textContent = "How many " + formatValue(small) + " coins are in " + formatValue(large) + "?";
-    renderCoins(true);
+    let safety = 0;
+    do{
+        small = smallChoices[randomInt(0, smallChoices.length-1)];
+        large = largeChoices[randomInt(0, largeChoices.length-1)];
+        safety += 1;
+        if (safety > 200) break;
+    }while (large <= small || (large % small !== 0));
+    return { small, large };
 }
 
-/* ---------- Main Flow ---------- */
+function makeRandomCoinSetWithTotal(totalPence, minCoins, maxCoins, allowedValues){
+    const allowed = allowedValues.slice().sort((a,b)=>b-a);
+    let best = null;
 
-function generateQuestion() {
-    if (lockedOnSolution) return;
-    solutionWrap.style.display = "none";
-    feedback.textContent = "";
-    answer.value = "";
+    for (let attempt=0; attempt<220; attempt++){
+        let remaining = totalPence;
+        let picked = [];
+        const shuffled = allowed.slice().sort(() => Math.random() - 0.5);
+
+        for (let i=0;i<120;i++){
+            if (remaining <= 0) break;
+            const v = shuffled[randomInt(0, shuffled.length-1)];
+            if (v <= remaining){
+                picked.push(v);
+                remaining -= v;
+                if (picked.length >= maxCoins && remaining > 0) break;
+            }
+        }
+
+        if (remaining === 0 && picked.length >= minCoins && picked.length <= maxCoins){
+            best = picked;
+            break;
+        }
+    }
+
+    if (!best){
+        best = [];
+        let remaining = totalPence;
+        const fallback = allowed.slice().sort((a,b)=>b-a);
+        for (const v of fallback){
+            while (remaining >= v && best.length < maxCoins){
+                best.push(v);
+                remaining -= v;
+            }
+        }
+        while (remaining > 0){
+            best.push(1);
+            remaining -= 1;
+        }
+    }
+
+    return best.map(v => valueToCoin.get(v));
+}
+
+function generateSubdivision(){
+    answerType = "count";
+    subdivisionTarget = null;
+    currentCoins = [];
+    correctCount = 0;
+
+    const type = randomInt(0,1);
+
+    if (type === 0){
+        const { small, large } = pickSubdivisionPair();
+        currentCoins = [valueToCoin.get(small), valueToCoin.get(large)];
+        correctCount = Math.round(large / small);
+
+        questionEl.textContent = "How many " + formatValue(small) + " coins are in " + formatValue(large) + "?";
+        helperEl.textContent = "Think: divide the big value by the small value";
+        renderCoins({ showDivider: true, dividerText: "in" });
+        return;
+    }
+
+    // Type2: "How many X coins can you get for these coins?"
+    const targetChoices = [1,2,5,10];
+    const target = targetChoices[randomInt(0, targetChoices.length-1)];
+    subdivisionTarget = target;
+
+    const targetCount = randomInt(4, 20);
+    const totalPence = target * targetCount;
+
+    currentCoins = makeRandomCoinSetWithTotal(totalPence, 2, 5, [1,2,5,10,20,50,100,200]);
+    correctCount = Math.round(totalPence / target);
+
+    questionEl.textContent = "How many " + formatValue(target) + " coins can you get for these coins?";
+    helperEl.textContent = "Find the total, then divide by " + formatValue(target);
+    renderCoins();
+}
+
+function generateQuestion(){
+    clearAllTimeouts();
+    clearTimer();
+
+    feedbackEl.textContent = "";
+    answerEl.value = "";
+    hideSolution();
+
+    lockedOnSolution = false;
+    setControlsEnabled(true);
 
     let mode = modes[modeIndex];
-    if (mode === "random") {
-        mode = ["addition","multiplication","mixed","subdivision"][randomInt(0,3)];
+    if (mode === "random"){
+        const pick = randomInt(0,3);
+        mode = pick === 0 ? "addition" : (pick === 1 ? "multiplication" : (pick === 2 ? "mixed" : "subdivision"));
     }
 
     if (mode === "addition") generateAddition();
@@ -467,108 +841,163 @@ function generateQuestion() {
     if (mode === "subdivision") generateSubdivision();
 
     updateAnswerAffixes();
+    currencyLabelEl.textContent = currency;
+
+    if (timerOn) startTimer();
 }
 
-function handleWrong() {
+/* ---------- Timer ---------- */
+function startTimer(){
+    clearTimer();
+    timeLeft = 10;
+    timerEl.textContent = "Time left: " + timeLeft;
+
+    timerInterval = setInterval(() => {
+        timeLeft -= 1;
+        timerEl.textContent = "Time left: " + timeLeft;
+        if (timeLeft <= 0){
+            clearTimer();
+            handleWrong(true);
+        }
+    }, 1000);
+}
+
+/* ---------- Answer checking ---------- */
+function readUserNumber(){
+    const raw = answerEl.value;
+    if (raw === null || raw === undefined || raw === "") return null;
+    const n = parseFloat(raw);
+    if (isNaN(n)) return null;
+    return n;
+}
+
+function checkAnswer(){
+    if (lockedOnSolution) return;
+
+    const n = readUserNumber();
+    if (n === null) return;
+
+    if (answerType === "count"){
+        const userCount = Math.round(n);
+        if (userCount === correctCount){
+            try{ correctSound.play(); }catch(e){}
+            streak += 1;
+            best = Math.max(best, streak);
+            feedbackEl.textContent = "Correct! 🎉";
+            updateStats();
+            clearTimer();
+            animTimeouts.push(setTimeout(generateQuestion, 700));
+        } else {
+            handleWrong(false);
+        }
+        return;
+    }
+
+    const userPence = currency === "pounds" ? Math.round(n * 100) : Math.round(n);
+    if (userPence === correctTotal){
+        try{ correctSound.play(); }catch(e){}
+        streak += 1;
+        best = Math.max(best, streak);
+        feedbackEl.textContent = "Correct! 🎉";
+        updateStats();
+        clearTimer();
+        animTimeouts.push(setTimeout(generateQuestion, 800));
+    } else {
+        handleWrong(false);
+    }
+}
+
+/* ---------- Wrong answer flow with grouping + summing animation ---------- */
+function handleWrong(fromTimer){
+    if (lockedOnSolution) return;
+
+    clearTimer();
+    clearAllTimeouts();
+
+    try{ wrongSound.play(); }catch(e){}
+
+    feedbackEl.textContent = fromTimer ? "Time is up. Here is the best way to work it out:" : "Not quite. Here is the best way to work it out:";
+
     lockedOnSolution = true;
-    feedback.textContent = "Not quite. Here is the best way to work it out:";
-    solution.textContent = (answerType==="money")
-        ? buildMoneyTeachingSolution()
-        : buildSubdivisionTeachingSolution();
-    solutionWrap.style.display = "block";
+    setControlsEnabled(false);
+    document.getElementById("resetBtn").disabled = false;
+
+    // Build teaching text
+    if (answerType === "money"){
+        solutionEl.textContent = buildMoneyTeachingSolutionText();
+    } else {
+        solutionEl.textContent = buildSubdivisionTeachingSolutionText();
+    }
+
+    showSolution();
+
+    // Animate grouping (only meaningful for normal multi-coin displays)
+    // For subdivision type1 (with divider), we do not group.
+    const hasDivider = coinsDiv.querySelector("#dividerSymbol") !== null;
+    if (!hasDivider){
+        animTimeouts.push(setTimeout(() => animateGroupCoins(), 120));
+    }
+
+    // Animate running total (money only)
+    startRunningTotalAnimation();
+
+    // Reset streak
     streak = 0;
     updateStats();
 }
 
-function checkAnswer() {
-    if (lockedOnSolution) return;
-    const raw = parseFloat(answer.value);
-    if (isNaN(raw)) return;
-
-    if (answerType === "count") {
-        if (Math.round(raw) === correctCount) {
-            streak++; best=Math.max(best,streak);
-            feedback.textContent="Correct! 🎉";
-            updateStats();
-            setTimeout(generateQuestion,700);
-        } else handleWrong();
-        return;
-    }
-
-    const userPence = currency==="pounds" ? Math.round(raw*100) : Math.round(raw);
-    if (userPence === correctTotal) {
-        streak++; best=Math.max(best,streak);
-        feedback.textContent="Correct! 🎉";
-        updateStats();
-        setTimeout(generateQuestion,700);
-    } else handleWrong();
-}
-
-function acknowledgeSolution() {
+function acknowledgeSolution(){
     lockedOnSolution = false;
-    solutionWrap.style.display = "none";
+    setControlsEnabled(true);
+    hideSolution();
     generateQuestion();
 }
 
-function toggleMode() {
+/* ---------- Controls ---------- */
+function toggleMode(){
     if (lockedOnSolution) return;
-    modeIndex = (modeIndex+1)%modes.length;
-    modeLabel.textContent = modes[modeIndex][0].toUpperCase()+modes[modeIndex].slice(1);
+    modeIndex = (modeIndex + 1) % modes.length;
+    modeLabelEl.textContent = modeLabelFromKey(modes[modeIndex]);
     generateQuestion();
 }
 
-function toggleCurrency() {
-    if (answerType!=="money") return;
-    currency = currency==="pence" ? "pounds" : "pence";
-    currencyLabel.textContent = currency;
+function toggleCurrency(){
+    if (lockedOnSolution) return;
+    if (answerType !== "money") return;
+    currency = currency === "pence" ? "pounds" : "pence";
+    currencyLabelEl.textContent = currency;
     updateAnswerAffixes();
 }
 
-function toggleTimer() {
+function toggleTimer(){
+    if (lockedOnSolution) return;
     timerOn = !timerOn;
-    timerLabel.textContent = timerOn ? "On" : "Off";
-}
-
-function resetGame() {
-    streak = 0; best = 0;
-    updateStats();
-    lockedOnSolution = false;
+    timerLabelEl.textContent = timerOn ? "On" : "Off";
     generateQuestion();
 }
 
-function updateStats() {
-    streakSpan.textContent = streak;
-    bestSpan.textContent = best;
-    trophy.style.display = streak>=10 ? "block" : "none";
+function resetGame(){
+    clearAllTimeouts();
+    clearTimer();
+    lockedOnSolution = false;
+    streak = 0;
+    best = 0;
+    updateStats();
+    hideSolution();
+    generateQuestion();
 }
 
-/* ---------- DOM refs ---------- */
-
-const coinsDiv = document.getElementById("coins");
-const question = document.getElementById("question");
-const answer = document.getElementById("answer");
-const feedback = document.getElementById("feedback");
-const solution = document.getElementById("solution");
-const solutionWrap = document.getElementById("solutionWrap");
-const prefix = document.getElementById("prefix");
-const suffix = document.getElementById("suffix");
-const modeLabel = document.getElementById("modeLabel");
-const currencyLabel = document.getElementById("currencyLabel");
-const timerLabel = document.getElementById("timerLabel");
-const currencyBtn = document.getElementById("currencyBtn");
-const streakSpan = document.getElementById("streak");
-const bestSpan = document.getElementById("best");
-const trophy = document.getElementById("trophy");
+/* ---------- Keyboard ---------- */
+answerEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkAnswer();
+});
 
 /* ---------- Init ---------- */
-
-modeLabel.textContent = "Addition";
-currencyLabel.textContent = currency;
-timerLabel.textContent = "Off";
-updateAnswerAffixes();
+modeLabelEl.textContent = modeLabelFromKey(modes[modeIndex]);
+currencyLabelEl.textContent = currency;
+timerLabelEl.textContent = "Off";
+updateStats();
 generateQuestion();
 </script>
-
-</div>
 </body>
 </html>
