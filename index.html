@@ -39,7 +39,7 @@ body{
 
 #app{
     width:100%;
-    max-width: 980px;
+    max-width: 1040px;
     background: var(--card);
     border-radius: 14px;
     box-shadow: 0 10px 30px var(--shadow);
@@ -89,23 +89,37 @@ button:disabled{ cursor:not-allowed; opacity:0.6; }
     min-height: 18px;
 }
 
+/* Coin sizes (approx proportional to real UK coins) */
+:root{
+    --coin-1p: 70px;
+    --coin-2p: 78px;
+    --coin-5p: 72px;
+    --coin-10p: 74px;
+    --coin-20p: 72px;
+    --coin-50p: 80px;
+    --coin-100p: 78px;  /* £1 */
+    --coin-200p: 82px;  /* £2 */
+}
+
+/* Coin tray */
 #coins{
     display:flex;
     justify-content:center;
-    align-items:center;
+    align-items:flex-end;
     flex-wrap:wrap;
-    gap: 10px;
+    gap: 12px;
     margin: 16px 0 10px 0;
-    padding: 6px 0;
+    padding: 8px 6px;
     position: relative;
 }
 
+/* Wrap draws a ring around the coin */
 .coinWrap{
-    width: 86px;
-    height: 86px;
+    width: var(--sz, 78px);
+    height: var(--sz, 78px);
     border-radius: 999px;
-    border: 4px solid var(--ring, #cfd8e3);
-    background: rgba(255,255,255,0.7);
+    border: 4px solid transparent;
+    background: rgba(255,255,255,0.75);
     display:flex;
     justify-content:center;
     align-items:center;
@@ -113,13 +127,11 @@ button:disabled{ cursor:not-allowed; opacity:0.6; }
     transition: border-color 240ms ease, transform 240ms ease;
 }
 
-.coinWrap.groupStart{
-    margin-left: 18px;
-}
+.coinWrap.groupStart{ margin-left: 18px; }
 
 .coinImg{
-    width: 72px;
-    height: 72px;
+    width: calc(var(--sz, 78px) - 10px);
+    height: calc(var(--sz, 78px) - 10px);
     border-radius: 999px;
     object-fit: cover;
 }
@@ -130,6 +142,7 @@ button:disabled{ cursor:not-allowed; opacity:0.6; }
     font-size: 26px;
     margin: 0 4px;
     user-select: none;
+    align-self: center;
 }
 
 #answerRow{
@@ -179,7 +192,7 @@ input{
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 14px 14px;
-    max-width: 900px;
+    max-width: 980px;
     margin: 0 auto;
     text-align:left;
 }
@@ -253,9 +266,7 @@ input{
     color: #2c3e50;
 }
 
-.solText{
-    margin: 4px 0;
-}
+.solText{ margin: 4px 0; }
 
 .solRow{
     display:flex;
@@ -267,7 +278,7 @@ input{
 
 .solCoinsRow{
     display:flex;
-    align-items:center;
+    align-items:flex-end;
     flex-wrap:wrap;
     gap: 8px;
     margin: 6px 0 10px 0;
@@ -277,7 +288,7 @@ input{
     width: 44px;
     height: 44px;
     border-radius: 999px;
-    border: 3px solid var(--ring, #cfd8e3);
+    border: 3px solid #cfd8e3;
     background: rgba(255,255,255,0.7);
     display:flex;
     justify-content:center;
@@ -349,10 +360,11 @@ input{
 
 <body>
 <div id="app">
-    <h1>Cillian's Coin GOAT Games</h1>
+    <h1>Cillian's Coin GOAT Game</h1>
     <div id="subhead">Add coins, use multiplication, try mixed questions, and practise subdivision.</div>
 
     <div id="controls">
+        <button id="groupBtn" onclick="toggleGrouping()">Grouping rings: <span id="groupLabel">Off</span></button>
         <button id="modeBtn" onclick="toggleMode()">Mode: <span id="modeLabel">Addition</span></button>
         <button id="currencyBtn" onclick="toggleCurrency()">Answer in: <span id="currencyLabel">pence</span></button>
         <button id="timerBtn" onclick="toggleTimer()">Timer: <span id="timerLabel">Off</span></button>
@@ -403,14 +415,14 @@ input{
 
 <script>
 const COINS = [
-    { value: 1, img: "coins/1p.jpg" },
-    { value: 2, img: "coins/2p.jpg" },
-    { value: 5, img: "coins/5p.jpg" },
-    { value: 10, img: "coins/10p.jpg" },
-    { value: 20, img: "coins/20p.png" },
-    { value: 50, img: "coins/50p.jpg" },
-    { value: 100, img: "coins/1pound.jpg" },
-    { value: 200, img: "coins/2pound.png" }
+    { value: 1, img: "coins/1p.jpg",  sizeVar: "--coin-1p" },
+    { value: 2, img: "coins/2p.jpg",  sizeVar: "--coin-2p" },
+    { value: 5, img: "coins/5p.jpg",  sizeVar: "--coin-5p" },
+    { value: 10, img: "coins/10p.jpg", sizeVar: "--coin-10p" },
+    { value: 20, img: "coins/20p.png", sizeVar: "--coin-20p" },
+    { value: 50, img: "coins/50p.jpg", sizeVar: "--coin-50p" },
+    { value: 100, img: "coins/1pound.jpg", sizeVar: "--coin-100p" },
+    { value: 200, img: "coins/2pound.png", sizeVar: "--coin-200p" }
 ];
 
 const RING_COLOURS = {
@@ -424,8 +436,20 @@ const RING_COLOURS = {
     1:   "#64748B"
 };
 
+const SIZE_VAR_BY_VALUE = {
+    1: "--coin-1p",
+    2: "--coin-2p",
+    5: "--coin-5p",
+    10: "--coin-10p",
+    20: "--coin-20p",
+    50: "--coin-50p",
+    100: "--coin-100p",
+    200: "--coin-200p"
+};
+
 const valueToCoin = new Map(COINS.map(c => [c.value, c]));
 
+let groupingRingsOn = false;   // OFF by default
 let modes = ["addition", "multiplication", "mixed", "subdivision", "random"];
 let modeIndex = 0;
 
@@ -437,11 +461,11 @@ let answerType = "money";
 let correctTotal = 0;
 let correctCount = 0;
 
-let subdivisionTarget = null;     // target coin value (type2)
-let subdivisionType = null;       // "type1" or "type2"
-let subdivisionSmall = null;      // type1 small coin value
-let subdivisionLarge = null;      // type1 large coin value
-let subdivisionTotalPence = null; // type2 total sum in pence
+let subdivisionTarget = null;
+let subdivisionType = null;
+let subdivisionSmall = null;
+let subdivisionLarge = null;
+let subdivisionTotalPence = null;
 
 let streak = 0;
 let best = 0;
@@ -469,6 +493,7 @@ const timerLabelEl = document.getElementById("timerLabel");
 const timerEl = document.getElementById("timer");
 const trophyEl = document.getElementById("trophy");
 const currencyBtn = document.getElementById("currencyBtn");
+const groupLabelEl = document.getElementById("groupLabel");
 
 const correctSound = document.getElementById("correctSound");
 const wrongSound = document.getElementById("wrongSound");
@@ -525,6 +550,7 @@ function updateAnswerAffixes(){
 }
 
 function setControlsEnabled(enabled){
+    document.getElementById("groupBtn").disabled = !enabled;
     document.getElementById("modeBtn").disabled = !enabled;
     document.getElementById("timerBtn").disabled = !enabled;
     document.getElementById("resetBtn").disabled = !enabled;
@@ -545,7 +571,14 @@ function showSolution(){
     solutionWrapEl.style.display = "block";
 }
 
-/* ---------- Rendering coins with colour rings ---------- */
+/* ---------- Coin sizing ---------- */
+function sizePxForCoinValue(value){
+    const varName = SIZE_VAR_BY_VALUE[value] || "--coin-100p";
+    const px = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+    return px || "78px";
+}
+
+/* ---------- Rendering coins (rings optional) ---------- */
 function renderCoins(options = {}){
     const { showDivider=false, dividerText="in" } = options;
 
@@ -557,7 +590,15 @@ function renderCoins(options = {}){
             wrap.className = "coinWrap";
             wrap.dataset.value = String(c.value);
             wrap.dataset.idx = String(idx);
-            wrap.style.setProperty("--ring", RING_COLOURS[c.value] || "#cfd8e3");
+
+            const sz = sizePxForCoinValue(c.value);
+            wrap.style.setProperty("--sz", sz);
+
+            if (groupingRingsOn){
+                wrap.style.borderColor = (RING_COLOURS[c.value] || "#cfd8e3");
+            } else {
+                wrap.style.borderColor = "transparent";
+            }
 
             const img = document.createElement("img");
             img.className = "coinImg";
@@ -575,7 +616,8 @@ function renderCoins(options = {}){
     const wrapL = document.createElement("div");
     wrapL.className = "coinWrap";
     wrapL.dataset.value = String(left.value);
-    wrapL.style.setProperty("--ring", RING_COLOURS[left.value] || "#cfd8e3");
+    wrapL.style.setProperty("--sz", sizePxForCoinValue(left.value));
+    wrapL.style.borderColor = groupingRingsOn ? (RING_COLOURS[left.value] || "#cfd8e3") : "transparent";
     const imgL = document.createElement("img");
     imgL.className = "coinImg";
     imgL.src = left.img;
@@ -588,7 +630,8 @@ function renderCoins(options = {}){
     const wrapR = document.createElement("div");
     wrapR.className = "coinWrap";
     wrapR.dataset.value = String(right.value);
-    wrapR.style.setProperty("--ring", RING_COLOURS[right.value] || "#cfd8e3");
+    wrapR.style.setProperty("--sz", sizePxForCoinValue(right.value));
+    wrapR.style.borderColor = groupingRingsOn ? (RING_COLOURS[right.value] || "#cfd8e3") : "transparent";
     const imgR = document.createElement("img");
     imgR.className = "coinImg";
     imgR.src = right.img;
@@ -599,7 +642,7 @@ function renderCoins(options = {}){
     coinsDiv.appendChild(wrapR);
 }
 
-/* ---------- FLIP animation for grouping ---------- */
+/* ---------- FLIP animation for grouping (works regardless of ring on/off) ---------- */
 function animateGroupCoins(){
     const wraps = Array.from(coinsDiv.querySelectorAll(".coinWrap"));
     if (wraps.length < 2) return;
@@ -646,7 +689,7 @@ function animateGroupCoins(){
     }, 560));
 }
 
-/* ---------- Money teaching solution (text + animated running total) ---------- */
+/* ---------- Money teaching solution ---------- */
 function buildCoinCountsFromCurrent(){
     const map = new Map();
     currentCoins.forEach(c => map.set(c.value, (map.get(c.value) || 0) + 1));
@@ -719,12 +762,12 @@ function startRunningTotalAnimation(){
     }, 420));
 }
 
-/* ---------- Subdivision teaching solution with cancelling zeros + visuals ---------- */
+/* ---------- Subdivision teaching solution (HTML) ---------- */
 function miniCoinHTML(value){
     const coin = valueToCoin.get(value);
-    const ring = RING_COLOURS[value] || "#cfd8e3";
+    const ring = groupingRingsOn ? (RING_COLOURS[value] || "#cfd8e3") : "#cfd8e3";
     return (
-        "<span class='solCoinMini' style='--ring:" + ring + "'>" +
+        "<span class='solCoinMini' style='border-color:" + ring + "'>" +
             "<img alt='' src='" + coin.img + "' />" +
         "</span>"
     );
@@ -753,7 +796,6 @@ function cancelCommonZeros(a, b){
 }
 
 function buildSubdivisionTeachingSolutionHTML(){
-    // Type1: "How many small coins are in big coin?"
     if (subdivisionType === "type1"){
         const small = subdivisionSmall;
         const large = subdivisionLarge;
@@ -809,7 +851,7 @@ function buildSubdivisionTeachingSolutionHTML(){
 
         return (
             "<div class='solStepTitle'>Step 1: Understand the question</div>" +
-            "<div class='solText'>You are asking: how many <b>" + formatValue(small) + "</b> coins fit into <b>" + formatValue(large) + "</b>?</div>" +
+            "<div class='solText'>How many <b>" + formatValue(small) + "</b> coins fit into <b>" + formatValue(large) + "</b>?</div>" +
             visualRow +
             "<div class='solStepTitle'>Step 2: Turn it into a division</div>" +
             "<div class='solText'><span class='badge'>Divide</span> " + large + "p ÷ " + small + "p</div>" +
@@ -824,7 +866,6 @@ function buildSubdivisionTeachingSolutionHTML(){
         );
     }
 
-    // Type2: set of coins, divide total by target coin value
     const target = subdivisionTarget || 1;
     const total = subdivisionTotalPence !== null ? subdivisionTotalPence : currentCoins.reduce((a,c)=>a+c.value,0);
 
@@ -1162,7 +1203,7 @@ function checkAnswer(){
     }
 }
 
-/* ---------- Wrong answer flow with grouping + summing animation ---------- */
+/* ---------- Wrong answer flow ---------- */
 function handleWrong(fromTimer){
     if (lockedOnSolution) return;
 
@@ -1208,6 +1249,13 @@ function acknowledgeSolution(){
 }
 
 /* ---------- Controls ---------- */
+function toggleGrouping(){
+    if (lockedOnSolution) return;
+    groupingRingsOn = !groupingRingsOn;
+    groupLabelEl.textContent = groupingRingsOn ? "On" : "Off";
+    renderCoins({ showDivider: (coinsDiv.querySelector("#dividerSymbol") !== null) });
+}
+
 function toggleMode(){
     if (lockedOnSolution) return;
     modeIndex = (modeIndex + 1) % modes.length;
@@ -1247,6 +1295,7 @@ answerEl.addEventListener("keydown", (e) => {
 });
 
 /* ---------- Init ---------- */
+groupLabelEl.textContent = "Off";
 modeLabelEl.textContent = modeLabelFromKey(modes[modeIndex]);
 currencyLabelEl.textContent = currency;
 timerLabelEl.textContent = "Off";
