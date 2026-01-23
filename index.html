@@ -192,7 +192,6 @@ input{
 
 #solution{
     font-size: 17px;
-    white-space: pre-line;
     color: #34495e;
     line-height: 1.45;
 }
@@ -246,12 +245,111 @@ input{
     50%{ transform: scale(1.04); }
     100%{ transform: scale(1); }
 }
+
+/* Solution visuals */
+.solStepTitle{
+    font-weight: 800;
+    margin: 10px 0 6px 0;
+    color: #2c3e50;
+}
+
+.solText{
+    margin: 4px 0;
+}
+
+.solRow{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.solCoinsRow{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap: 8px;
+    margin: 6px 0 10px 0;
+}
+
+.solCoinMini{
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 3px solid var(--ring, #cfd8e3);
+    background: rgba(255,255,255,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.solCoinMini img{
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    object-fit: cover;
+}
+
+.badge{
+    display:inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #cfd8e3;
+    background: #ffffff;
+    color: #34495e;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.mathBox{
+    display:inline-block;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #dde6f0;
+    background: #ffffff;
+    font-size: 18px;
+    color: #2f3f52;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.strike{
+    text-decoration: line-through;
+    text-decoration-thickness: 3px;
+    text-decoration-color: #ef4444;
+}
+
+.smallMuted{
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.arrow{
+    font-weight: 900;
+    color: #51606f;
+    font-size: 18px;
+}
+
+.fractionLike{
+    display:inline-flex;
+    align-items:center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.divSign{
+    font-weight: 900;
+    color: #51606f;
+}
+
 </style>
 </head>
 
 <body>
 <div id="app">
-    <h1>Cillian's Coin GOAT Game</h1>
+    <h1>Cillian's Coin GOAT Games</h1>
     <div id="subhead">Add coins, use multiplication, try mixed questions, and practise subdivision.</div>
 
     <div id="controls">
@@ -316,14 +414,14 @@ const COINS = [
 ];
 
 const RING_COLOURS = {
-    200: "#7C3AED",  // £2
-    100: "#2563EB",  // £1
-    50:  "#F59E0B",  // 50p
-    20:  "#10B981",  // 20p
-    10:  "#EF4444",  // 10p
-    5:   "#8B5CF6",  // 5p
-    2:   "#06B6D4",  // 2p
-    1:   "#64748B"   // 1p
+    200: "#7C3AED",
+    100: "#2563EB",
+    50:  "#F59E0B",
+    20:  "#10B981",
+    10:  "#EF4444",
+    5:   "#8B5CF6",
+    2:   "#06B6D4",
+    1:   "#64748B"
 };
 
 const valueToCoin = new Map(COINS.map(c => [c.value, c]));
@@ -331,14 +429,19 @@ const valueToCoin = new Map(COINS.map(c => [c.value, c]));
 let modes = ["addition", "multiplication", "mixed", "subdivision", "random"];
 let modeIndex = 0;
 
-let currency = "pence";         // "pence" or "pounds"
+let currency = "pence";
 let timerOn = false;
 
-let currentCoins = [];          // array of coin objects shown
-let answerType = "money";       // "money" or "count"
-let correctTotal = 0;           // in pence
-let correctCount = 0;           // for subdivision count
-let subdivisionTarget = null;   // target coin value for type2 subdivision
+let currentCoins = [];
+let answerType = "money";
+let correctTotal = 0;
+let correctCount = 0;
+
+let subdivisionTarget = null;     // target coin value (type2)
+let subdivisionType = null;       // "type1" or "type2"
+let subdivisionSmall = null;      // type1 small coin value
+let subdivisionLarge = null;      // type1 large coin value
+let subdivisionTotalPence = null; // type2 total sum in pence
 
 let streak = 0;
 let best = 0;
@@ -348,7 +451,6 @@ let timerInterval = null;
 let timeLeft = 0;
 
 let animTimeouts = [];
-let groupingActive = false;
 
 /* ---------- DOM ---------- */
 const coinsDiv = document.getElementById("coins");
@@ -435,7 +537,7 @@ function setControlsEnabled(enabled){
 
 function hideSolution(){
     solutionWrapEl.style.display = "none";
-    solutionEl.textContent = "";
+    solutionEl.innerHTML = "";
     sumAnimEl.textContent = "";
 }
 
@@ -448,7 +550,6 @@ function renderCoins(options = {}){
     const { showDivider=false, dividerText="in" } = options;
 
     coinsDiv.innerHTML = "";
-    groupingActive = false;
 
     if (!showDivider){
         currentCoins.forEach((c, idx) => {
@@ -500,15 +601,12 @@ function renderCoins(options = {}){
 
 /* ---------- FLIP animation for grouping ---------- */
 function animateGroupCoins(){
-    // Only animate when we have multiple coinWrap elements (not the divider layout).
     const wraps = Array.from(coinsDiv.querySelectorAll(".coinWrap"));
     if (wraps.length < 2) return;
 
-    // Capture first positions
     const first = new Map();
     wraps.forEach(el => first.set(el, el.getBoundingClientRect()));
 
-    // Sort by value desc, then stable by original idx
     wraps.sort((a, b) => {
         const va = parseInt(a.dataset.value, 10);
         const vb = parseInt(b.dataset.value, 10);
@@ -516,7 +614,6 @@ function animateGroupCoins(){
         return parseInt(a.dataset.idx, 10) - parseInt(b.dataset.idx, 10);
     });
 
-    // Mark group starts for spacing
     let lastV = null;
     wraps.forEach(el => el.classList.remove("groupStart"));
     wraps.forEach(el => {
@@ -525,10 +622,8 @@ function animateGroupCoins(){
         lastV = v;
     });
 
-    // Reorder DOM
     wraps.forEach(el => coinsDiv.appendChild(el));
 
-    // Capture last positions and animate
     wraps.forEach(el => {
         const f = first.get(el);
         const l = el.getBoundingClientRect();
@@ -538,7 +633,6 @@ function animateGroupCoins(){
         el.style.transition = "transform 0s";
     });
 
-    // Trigger reflow then animate to identity
     coinsDiv.offsetHeight;
 
     wraps.forEach(el => {
@@ -546,44 +640,45 @@ function animateGroupCoins(){
         el.style.transform = "translate(0px,0px)";
     });
 
-    // Small pulse hint after grouping finishes
     animTimeouts.push(setTimeout(() => {
         wraps.forEach(el => el.classList.add("pulseHint"));
         animTimeouts.push(setTimeout(() => wraps.forEach(el => el.classList.remove("pulseHint")), 1200));
     }, 560));
-
-    groupingActive = true;
 }
 
-/* ---------- Teaching solutions (text + animated running total) ---------- */
+/* ---------- Money teaching solution (text + animated running total) ---------- */
 function buildCoinCountsFromCurrent(){
     const map = new Map();
     currentCoins.forEach(c => map.set(c.value, (map.get(c.value) || 0) + 1));
     return map;
 }
 
-function buildMoneyTeachingSolutionText(){
+function buildMoneyTeachingSolutionHTML(){
     const counts = buildCoinCountsFromCurrent();
     const values = Array.from(counts.keys()).sort((a,b)=>b-a);
 
-    const lines = [];
-    lines.push("Step 1: Group the same coins");
-    lines.push(values.map(v => {
+    const groupLine = values.map(v => {
         const n = counts.get(v);
         return n > 1 ? n + " × " + formatValue(v) : formatValue(v);
-    }).join(" + "));
-    lines.push("");
-    lines.push("Step 2: Do any easy multiplication");
+    }).join(" + ");
+
+    const multLines = [];
     values.forEach(v => {
         const n = counts.get(v);
-        if (n > 1) lines.push(n + " × " + v + "p = " + (n*v) + "p");
+        if (n > 1) multLines.push("<div class='solText'><span class='badge'>" + n + " ×</span> " + v + "p = <b>" + (n*v) + "p</b></div>");
     });
-    lines.push("");
-    lines.push("Step 3: Add from biggest to smallest");
-    lines.push("Use a running total so you do not lose track.");
-    lines.push("");
-    lines.push("Final answer: " + correctTotal + "p (" + penceToPoundsString(correctTotal) + ")");
-    return lines.join("\n");
+    if (multLines.length === 0) multLines.push("<div class='solText smallMuted'>No repeats this time, so you can just add them.</div>");
+
+    return (
+        "<div class='solStepTitle'>Step 1: Group the same coins</div>" +
+        "<div class='mathBox'>" + groupLine + "</div>" +
+        "<div class='solStepTitle'>Step 2: Do any easy multiplication</div>" +
+        multLines.join("") +
+        "<div class='solStepTitle'>Step 3: Add from biggest to smallest</div>" +
+        "<div class='solText smallMuted'>Watch the running total below.</div>" +
+        "<div class='solStepTitle'>Final answer</div>" +
+        "<div class='mathBox'><b>" + correctTotal + "p</b> (" + penceToPoundsString(correctTotal) + ")</div>"
+    );
 }
 
 function startRunningTotalAnimation(){
@@ -596,11 +691,8 @@ function startRunningTotalAnimation(){
     const values = Array.from(counts.keys()).sort((a,b)=>b-a);
 
     let running = 0;
-    const lines = [];
-    lines.push("Running total:");
-
-    // Build incremental steps
     const steps = [];
+
     values.forEach(v => {
         const n = counts.get(v);
         const subtotal = n * v;
@@ -609,9 +701,9 @@ function startRunningTotalAnimation(){
         steps.push(left + " = " + subtotal + "p, total = " + running + "p");
     });
 
-    // Animate: reveal one line every 520ms
     let i = 0;
-    sumAnimEl.textContent = lines.join("\n");
+    sumAnimEl.textContent = "Running total:";
+
     animTimeouts.push(setTimeout(() => {
         function tick(){
             if (i >= steps.length){
@@ -627,41 +719,176 @@ function startRunningTotalAnimation(){
     }, 420));
 }
 
-function buildSubdivisionTeachingSolutionText(){
-    const lines = [];
-    if (currentCoins.length === 2){
-        const small = currentCoins[0].value;
-        const large = currentCoins[1].value;
-        const answer = Math.round(large / small);
-        lines.push("Step 1: Put both values in pence");
-        lines.push(large + "p and " + small + "p");
-        lines.push("");
-        lines.push("Step 2: Divide");
-        lines.push(large + "p ÷ " + small + "p = " + answer);
-        lines.push("");
-        lines.push("Step 3: Quick check");
-        lines.push(answer + " × " + small + "p = " + (answer * small) + "p");
-        lines.push("");
-        lines.push("Final answer: " + correctCount);
-        return lines.join("\n");
+/* ---------- Subdivision teaching solution with cancelling zeros + visuals ---------- */
+function miniCoinHTML(value){
+    const coin = valueToCoin.get(value);
+    const ring = RING_COLOURS[value] || "#cfd8e3";
+    return (
+        "<span class='solCoinMini' style='--ring:" + ring + "'>" +
+            "<img alt='' src='" + coin.img + "' />" +
+        "</span>"
+    );
+}
+
+function strikeLastKZerosHTML(n, k){
+    const s = String(n);
+    const zeros = "0".repeat(k);
+    if (!s.endsWith(zeros)) return s;
+    const head = s.slice(0, s.length - k);
+    const struck = "<span class='strike'>" + zeros + "</span>";
+    return head + struck;
+}
+
+function cancelCommonZeros(a, b){
+    let k = 0;
+    let aa = a;
+    let bb = b;
+    while (aa % 10 === 0 && bb % 10 === 0){
+        aa = Math.round(aa / 10);
+        bb = Math.round(bb / 10);
+        k += 1;
+        if (k >= 6) break;
+    }
+    return { k, aReduced: aa, bReduced: bb };
+}
+
+function buildSubdivisionTeachingSolutionHTML(){
+    // Type1: "How many small coins are in big coin?"
+    if (subdivisionType === "type1"){
+        const small = subdivisionSmall;
+        const large = subdivisionLarge;
+
+        const cancel = cancelCommonZeros(large, small);
+        const k = cancel.k;
+
+        const largeStruck = (k > 0) ? strikeLastKZerosHTML(large, k) : String(large);
+        const smallStruck = (k > 0) ? strikeLastKZerosHTML(small, k) : String(small);
+
+        const showCancel = (k > 0);
+        const cancelText = (k === 1) ? "Cancel one zero (divide both numbers by 10)" : "Cancel " + k + " zeros (divide both numbers by " + (10 ** k) + ")";
+
+        let divisionBox = "";
+        if (showCancel){
+            divisionBox =
+                "<div class='solRow'>" +
+                    "<div class='mathBox fractionLike'>" +
+                        "<span>" + largeStruck + "</span>" +
+                        "<span class='divSign'>÷</span>" +
+                        "<span>" + smallStruck + "</span>" +
+                    "</div>" +
+                    "<span class='arrow'>→</span>" +
+                    "<div class='mathBox fractionLike'>" +
+                        "<span>" + cancel.aReduced + "</span>" +
+                        "<span class='divSign'>÷</span>" +
+                        "<span>" + cancel.bReduced + "</span>" +
+                    "</div>" +
+                "</div>" +
+                "<div class='solText smallMuted'>" + cancelText + "</div>";
+        } else {
+            divisionBox =
+                "<div class='solRow'>" +
+                    "<div class='mathBox fractionLike'>" +
+                        "<span>" + large + "</span>" +
+                        "<span class='divSign'>÷</span>" +
+                        "<span>" + small + "</span>" +
+                    "</div>" +
+                "</div>" +
+                "<div class='solText smallMuted'>No zeros to cancel this time.</div>";
+        }
+
+        const reducedA = showCancel ? cancel.aReduced : large;
+        const reducedB = showCancel ? cancel.bReduced : small;
+        const answer = Math.round(reducedA / reducedB);
+
+        const visualRow =
+            "<div class='solCoinsRow'>" +
+                "<span class='badge'>Small coin</span> " + miniCoinHTML(small) +
+                "<span class='arrow'>in</span>" +
+                "<span class='badge'>Big coin</span> " + miniCoinHTML(large) +
+            "</div>";
+
+        return (
+            "<div class='solStepTitle'>Step 1: Understand the question</div>" +
+            "<div class='solText'>You are asking: how many <b>" + formatValue(small) + "</b> coins fit into <b>" + formatValue(large) + "</b>?</div>" +
+            visualRow +
+            "<div class='solStepTitle'>Step 2: Turn it into a division</div>" +
+            "<div class='solText'><span class='badge'>Divide</span> " + large + "p ÷ " + small + "p</div>" +
+            "<div class='solStepTitle'>Step 3: Make the division easier</div>" +
+            divisionBox +
+            "<div class='solStepTitle'>Step 4: Divide</div>" +
+            "<div class='mathBox'><b>" + reducedA + " ÷ " + reducedB + " = " + answer + "</b></div>" +
+            "<div class='solStepTitle'>Step 5: Quick check</div>" +
+            "<div class='solText'>" + answer + " × " + small + "p = <b>" + (answer * small) + "p</b> (which matches " + large + "p)</div>" +
+            "<div class='solStepTitle'>Final answer</div>" +
+            "<div class='mathBox'><b>" + correctCount + "</b></div>"
+        );
     }
 
-    // Type2: set of coins, target known
-    const total = currentCoins.reduce((a,c)=>a+c.value,0);
+    // Type2: set of coins, divide total by target coin value
     const target = subdivisionTarget || 1;
+    const total = subdivisionTotalPence !== null ? subdivisionTotalPence : currentCoins.reduce((a,c)=>a+c.value,0);
 
-    lines.push("Step 1: Find the total");
-    lines.push(currentCoins.map(c => formatValue(c.value)).join(" + "));
-    lines.push("Total = " + total + "p");
-    lines.push("");
-    lines.push("Step 2: Divide by the coin you want (" + formatValue(target) + ")");
-    lines.push(total + "p ÷ " + target + "p = " + Math.round(total / target));
-    lines.push("");
-    lines.push("Step 3: Quick check");
-    lines.push(correctCount + " × " + target + "p = " + (correctCount * target) + "p");
-    lines.push("");
-    lines.push("Final answer: " + correctCount);
-    return lines.join("\n");
+    const coinSetVisual =
+        "<div class='solCoinsRow'>" +
+            currentCoins.map(c => miniCoinHTML(c.value)).join("") +
+        "</div>";
+
+    const cancel = cancelCommonZeros(total, target);
+    const showCancel = cancel.k > 0;
+
+    const totalStruck = showCancel ? strikeLastKZerosHTML(total, cancel.k) : String(total);
+    const targetStruck = showCancel ? strikeLastKZerosHTML(target, cancel.k) : String(target);
+    const cancelText = (cancel.k === 1) ? "Cancel one zero (divide both numbers by 10)" : "Cancel " + cancel.k + " zeros (divide both numbers by " + (10 ** cancel.k) + ")";
+
+    const divisionBox =
+        showCancel
+        ? (
+            "<div class='solRow'>" +
+                "<div class='mathBox fractionLike'>" +
+                    "<span>" + totalStruck + "</span>" +
+                    "<span class='divSign'>÷</span>" +
+                    "<span>" + targetStruck + "</span>" +
+                "</div>" +
+                "<span class='arrow'>→</span>" +
+                "<div class='mathBox fractionLike'>" +
+                    "<span>" + cancel.aReduced + "</span>" +
+                    "<span class='divSign'>÷</span>" +
+                    "<span>" + cancel.bReduced + "</span>" +
+                "</div>" +
+            "</div>" +
+            "<div class='solText smallMuted'>" + cancelText + "</div>"
+        )
+        : (
+            "<div class='solRow'>" +
+                "<div class='mathBox fractionLike'>" +
+                    "<span>" + total + "</span>" +
+                    "<span class='divSign'>÷</span>" +
+                    "<span>" + target + "</span>" +
+                "</div>" +
+            "</div>" +
+            "<div class='solText smallMuted'>No zeros to cancel this time.</div>"
+        );
+
+    const reducedA = showCancel ? cancel.aReduced : total;
+    const reducedB = showCancel ? cancel.bReduced : target;
+    const answer = Math.round(reducedA / reducedB);
+
+    return (
+        "<div class='solStepTitle'>Step 1: Find the total</div>" +
+        "<div class='solText'>Add the coins you are given:</div>" +
+        coinSetVisual +
+        "<div class='mathBox'><b>Total = " + total + "p</b></div>" +
+        "<div class='solStepTitle'>Step 2: Divide by the coin you want</div>" +
+        "<div class='solText'>You want " + formatValue(target) + " coins, so do: <b>" + total + "p ÷ " + target + "p</b></div>" +
+        "<div class='solStepTitle'>Step 3: Make the division easier</div>" +
+        divisionBox +
+        "<div class='solStepTitle'>Step 4: Divide</div>" +
+        "<div class='mathBox'><b>" + reducedA + " ÷ " + reducedB + " = " + answer + "</b></div>" +
+        "<div class='solStepTitle'>Step 5: Quick check</div>" +
+        "<div class='solText'>" + answer + " × " + target + "p = <b>" + (answer * target) + "p</b> (which matches " + total + "p)</div>" +
+        "<div class='solStepTitle'>Final answer</div>" +
+        "<div class='mathBox'><b>" + correctCount + "</b></div>"
+    );
 }
 
 /* ---------- Problem generators ---------- */
@@ -669,6 +896,12 @@ function generateAddition(){
     answerType = "money";
     currentCoins = [];
     correctTotal = 0;
+
+    subdivisionType = null;
+    subdivisionTarget = null;
+    subdivisionSmall = null;
+    subdivisionLarge = null;
+    subdivisionTotalPence = null;
 
     const count = randomInt(2, 4);
     for (let i=0;i<count;i++){
@@ -686,6 +919,12 @@ function generateMultiplication(){
     answerType = "money";
     currentCoins = [];
 
+    subdivisionType = null;
+    subdivisionTarget = null;
+    subdivisionSmall = null;
+    subdivisionLarge = null;
+    subdivisionTotalPence = null;
+
     const c = COINS[randomInt(0, COINS.length-1)];
     const n = randomInt(2, 4);
     for (let i=0;i<n;i++) currentCoins.push(c);
@@ -701,6 +940,12 @@ function generateMixed(){
     currentCoins = [];
     correctTotal = 0;
 
+    subdivisionType = null;
+    subdivisionTarget = null;
+    subdivisionSmall = null;
+    subdivisionLarge = null;
+    subdivisionTotalPence = null;
+
     const base = COINS[randomInt(0, COINS.length-1)];
     const n = randomInt(2, 4);
     for (let i=0;i<n;i++){
@@ -714,7 +959,7 @@ function generateMixed(){
     for (let i=0;i<extras;i++){
         let extra;
         do { extra = COINS[randomInt(0, COINS.length-1)]; }
-        while (extra.value === base.value); // never repeat the base coin outside the multiplication
+        while (extra.value === base.value);
         currentCoins.push(extra);
         correctTotal += extra.value;
         expr += " + " + formatValue(extra.value);
@@ -785,14 +1030,20 @@ function makeRandomCoinSetWithTotal(totalPence, minCoins, maxCoins, allowedValue
 
 function generateSubdivision(){
     answerType = "count";
-    subdivisionTarget = null;
     currentCoins = [];
     correctCount = 0;
 
     const type = randomInt(0,1);
 
     if (type === 0){
+        subdivisionType = "type1";
+        subdivisionTarget = null;
+        subdivisionTotalPence = null;
+
         const { small, large } = pickSubdivisionPair();
+        subdivisionSmall = small;
+        subdivisionLarge = large;
+
         currentCoins = [valueToCoin.get(small), valueToCoin.get(large)];
         correctCount = Math.round(large / small);
 
@@ -802,13 +1053,17 @@ function generateSubdivision(){
         return;
     }
 
-    // Type2: "How many X coins can you get for these coins?"
+    subdivisionType = "type2";
+    subdivisionSmall = null;
+    subdivisionLarge = null;
+
     const targetChoices = [1,2,5,10];
     const target = targetChoices[randomInt(0, targetChoices.length-1)];
     subdivisionTarget = target;
 
     const targetCount = randomInt(4, 20);
     const totalPence = target * targetCount;
+    subdivisionTotalPence = totalPence;
 
     currentCoins = makeRandomCoinSetWithTotal(totalPence, 2, 5, [1,2,5,10,20,50,100,200]);
     correctCount = Math.round(totalPence / target);
@@ -818,6 +1073,7 @@ function generateSubdivision(){
     renderCoins();
 }
 
+/* ---------- Main flow ---------- */
 function generateQuestion(){
     clearAllTimeouts();
     clearTimer();
@@ -831,8 +1087,7 @@ function generateQuestion(){
 
     let mode = modes[modeIndex];
     if (mode === "random"){
-        const pick = randomInt(0,3);
-        mode = pick === 0 ? "addition" : (pick === 1 ? "multiplication" : (pick === 2 ? "mixed" : "subdivision"));
+        mode = ["addition","multiplication","mixed","subdivision"][randomInt(0,3)];
     }
 
     if (mode === "addition") generateAddition();
@@ -922,26 +1177,25 @@ function handleWrong(fromTimer){
     setControlsEnabled(false);
     document.getElementById("resetBtn").disabled = false;
 
-    // Build teaching text
     if (answerType === "money"){
-        solutionEl.textContent = buildMoneyTeachingSolutionText();
+        solutionEl.innerHTML = buildMoneyTeachingSolutionHTML();
     } else {
-        solutionEl.textContent = buildSubdivisionTeachingSolutionText();
+        solutionEl.innerHTML = buildSubdivisionTeachingSolutionHTML();
     }
 
     showSolution();
 
-    // Animate grouping (only meaningful for normal multi-coin displays)
-    // For subdivision type1 (with divider), we do not group.
     const hasDivider = coinsDiv.querySelector("#dividerSymbol") !== null;
-    if (!hasDivider){
+    if (answerType === "money" && !hasDivider){
         animTimeouts.push(setTimeout(() => animateGroupCoins(), 120));
     }
 
-    // Animate running total (money only)
-    startRunningTotalAnimation();
+    if (answerType === "money"){
+        startRunningTotalAnimation();
+    } else {
+        sumAnimEl.textContent = "";
+    }
 
-    // Reset streak
     streak = 0;
     updateStats();
 }
